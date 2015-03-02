@@ -1,0 +1,9 @@
+{
+  "name"    : "dirty-bomb",
+  "version" : "0.1.0",
+  "main"    : "main.js",
+  "dependencies": {
+    "nodegit": "https://github.com/nodegit/tarball/master",
+    "promisify-node": "*"
+  }
+}
