@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Setup</title>
+  </head>
+  <body>
+    <h2>Enter your Github login details</h2>
+
+    <form>
+      <p>
+        <label>
+          Your email address<br>
+          <input type="text" name="email">
+        </label>
+      </p>
+
+      <p>
+        <label>
+          Your password<br>
+          <input type="password" name="password">
+        </label>
+      </p>
+
+      <button>Authorise</button>
+    </form>
+
+    <script>
+    var ipc = require("ipc");
+
+    document.querySelector("form").addEventListener("submit", function (evt) {
+      evt.preventDefault();
+
+      ipc.send("authorize", {
+        email    : this.email.value,
+        password : this.password.value
+      });
+    });
+    </script>
+  </body>
+</html>

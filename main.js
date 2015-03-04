@@ -1,10 +1,10 @@
 var app = require("app");
 var BrowserWindow = require("browser-window");
-var nodegit = require("nodegit");
 var ipc = require("ipc");
 var dialog = require("dialog");
 var promisify = require("promisify-node");
 var fs = promisify(require("fs"));
+var repository = require("./src/browser/repository");
 
 var mainWindow = null;
 
@@ -19,26 +19,23 @@ app.on("ready", function () {
     width  : 800,
     height : 600
   });
-  
-  mainWindow.loadUrl("file://" + __dirname + "/index.html");
-  
+
+  // if (repository.isReady()) {
+  //   mainWindow.loadUrl("file://" + __dirname + "/index.html");
+  // } else {
+    mainWindow.loadUrl("file://" + __dirname + "/setup.html");
+  // }
+
   mainWindow.on("closed", function () {
     mainWindow = null;
   });
 });
 
-ipc.on("clone", function () {
-  nodegit.Clone.clone("https://github.com/doryphores/testing.git", __dirname + "/repo", {
-    remoteCallbacks: {
-      // credentials: function () {
-      //   return nodegit.Cred.userpassPlaintextNew("doryphores", "");
-      // },
-      certificateCheck: function() {
-        return 1;
-      }
-    }
-  }).done(function () {
-    console.log("Done");
+ipc.on("authorize", function (event, data) {
+  repository.generateKeys(data.email, data.password, function () {
+    repository.clone(function () {
+      mainWindow.loadUrl("file://" + __dirname + "/index.html");
+    })
   });
 });
 

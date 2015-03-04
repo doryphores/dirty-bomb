@@ -4,22 +4,18 @@
     <title>Hello Atom Shell!</title>
   </head>
   <body>
-    <h1>Hello Atom Shell!</h1>
-    
-    <p>This is pretty cool!</p>
-
     <p>
       <button id="open">Open</button>
       <button id="clone">Clone it!</button>
       <button id="quit">Quit</button>
     </p>
-    
+
     <p>Current editing: <strong id="filename"></strong></p>
-    
+
     <p>
       <textarea name="editor" id="editor" cols="30" rows="10"></textarea>
     </p>
-    
+
     <p>
       <button id="save">Save</button>
     </p>
@@ -28,7 +24,7 @@
     var remote = require("remote");
     var app = remote.require("app");
     var ipc = require("ipc");
-    
+
     document.querySelector("#clone").addEventListener("click", function () {
       ipc.send("clone");
     });
@@ -36,7 +32,7 @@
     document.querySelector("#open").addEventListener("click", function () {
       ipc.send("open");
     });
-    
+
     ipc.on("load-file-data", function (data) {
       document.querySelector("#filename").innerHTML = data.fileName;
       document.querySelector("textarea").value = data.fileContent;
