@@ -2,8 +2,15 @@
   "name": "dirty-bomb",
   "version": "0.1.0",
   "main": "main.js",
+  "scripts": {
+    "start": "./node_modules/.bin/atom-shell ."
+  },
   "dependencies": {
-    "nodegit": "https://github.com/nodegit/nodegit/tarball/master"
+    "nodegit": "https://github.com/nodegit/nodegit/tarball/master",
+    "github": "*",
+    "promisify-node": "*",
+    "node-forge": "*",
+    "fs-extra": "*"
   },
   "devDependencies": {
     "atom-shell": "^0.21.2"

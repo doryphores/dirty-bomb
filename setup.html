@@ -4,13 +4,17 @@
     <title>Setup</title>
   </head>
   <body>
-    <h2>Enter your Github login details</h2>
+    <p>
+      <button id="quit">Quit</button>
+    </p>
 
     <form>
+      <h2>Enter your Github login details</h2>
+
       <p>
         <label>
           Your email address<br>
-          <input type="text" name="email">
+          <input type="text" name="email" autofocus>
         </label>
       </p>
 
@@ -23,17 +27,29 @@
 
       <button>Authorise</button>
     </form>
+    <div id="wait" style="display: none">
+      Please wait
+    </div>
 
     <script>
-    var ipc = require("ipc");
+    var remote = require("remote");
+    var app    = remote.require("app");
+    var ipc    = require("ipc");
 
     document.querySelector("form").addEventListener("submit", function (evt) {
       evt.preventDefault();
+
+      this.style.display = "none";
+      document.querySelector("#wait").style.display = "block";
 
       ipc.send("authorize", {
         email    : this.email.value,
         password : this.password.value
       });
+    });
+
+    document.querySelector("#quit").addEventListener("click", function () {
+      app.quit();
     });
     </script>
   </body>

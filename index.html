@@ -6,7 +6,6 @@
   <body>
     <p>
       <button id="open">Open</button>
-      <button id="clone">Clone it!</button>
       <button id="quit">Quit</button>
     </p>
 
@@ -24,10 +23,6 @@
     var remote = require("remote");
     var app = remote.require("app");
     var ipc = require("ipc");
-
-    document.querySelector("#clone").addEventListener("click", function () {
-      ipc.send("clone");
-    });
 
     document.querySelector("#open").addEventListener("click", function () {
       ipc.send("open");

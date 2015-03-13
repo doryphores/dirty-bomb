@@ -20,11 +20,9 @@ app.on("ready", function () {
     height : 600
   });
 
-  // if (repository.isReady()) {
-  //   mainWindow.loadUrl("file://" + __dirname + "/index.html");
-  // } else {
-    mainWindow.loadUrl("file://" + __dirname + "/setup.html");
-  // }
+  repository.setup(function (ready) {
+    mainWindow.loadUrl("file://" + __dirname + "/" + (ready ? "index" : "setup") + ".html");
+  });
 
   mainWindow.on("closed", function () {
     mainWindow = null;
@@ -32,8 +30,8 @@ app.on("ready", function () {
 });
 
 ipc.on("authorize", function (event, data) {
-  repository.generateKeys(data.email, data.password, function () {
-    repository.clone(function () {
+  repository.setupAuthentication(data.email, data.password, function () {
+    repository.clone(function (cloned) {
       mainWindow.loadUrl("file://" + __dirname + "/index.html");
     })
   });
