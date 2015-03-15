@@ -32,11 +32,18 @@ module.exports = {
 
   clone: function (callback) {
     var self = this;
-    
-    nodegit.Clone("git@github.com:simplybusiness/seedy.git", repoDir, {
+
+    nodegit.Clone("", repoDir, {
       remoteCallbacks: {
         credentials: function (url, userName) {
-          return nodegit.Cred.sshKeyNew(userName, publicKeyPath, privateKeyPath, "");
+          return nodegit.Cred.sshKeyFromAgent(userName);
+          // return nodegit.Cred.sshKeyNew(userName, publicKeyPath, privateKeyPath, "");
+        },
+        transferProgress: function (stats) {
+          console.log("received: ", Math.round(stats.receivedObjects() / stats.totalObjects() * 100));
+          if (stats.indexedObjects()) {
+            console.log("indexed: ", Math.round(stats.indexedObjects() / stats.totalObjects() * 100));
+          }
         }
       }
     }).done(function (repo) {

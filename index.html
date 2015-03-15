@@ -1,45 +1,15 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Hello Atom Shell!</title>
+    <title>Dirty bomb</title>
+    <link rel="stylesheet" href="css/theme.css">
   </head>
   <body>
-    <p>
-      <button id="open">Open</button>
-      <button id="quit">Quit</button>
-    </p>
-
-    <p>Current editing: <strong id="filename"></strong></p>
-
-    <p>
-      <textarea name="editor" id="editor" cols="30" rows="10"></textarea>
-    </p>
-
-    <p>
-      <button id="save">Save</button>
-    </p>
+    <div id="js-toolbar" class="toolbar"></div>
+    <div id="js-tree-view" class="tree"></div>
 
     <script>
-    var remote = require("remote");
-    var app = remote.require("app");
-    var ipc = require("ipc");
-
-    document.querySelector("#open").addEventListener("click", function () {
-      ipc.send("open");
-    });
-
-    ipc.on("load-file-data", function (data) {
-      document.querySelector("#filename").innerHTML = data.fileName;
-      document.querySelector("textarea").value = data.fileContent;
-    });
-
-    document.querySelector("#save").addEventListener("click", function () {
-      ipc.send("save", document.querySelector("textarea").value);
-    });
-
-    document.querySelector("#quit").addEventListener("click", function () {
-      app.quit();
-    });
+    require("./src/client.js");
     </script>
   </body>
 </html>

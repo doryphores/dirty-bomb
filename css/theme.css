@@ -1,0 +1,48 @@
+@import url(http://fonts.googleapis.com/css?family=Open+Sans:400,700);
+
+@import "reset.css";
+
+/*====================================*\
+  #SECTION-TOOLBAR
+\*====================================*/
+
+.toolbar {
+  position: absolute;
+  right: 20px;
+  top: 20px;
+}
+
+.toolbar button + button {
+  margin-left: 10px;
+}
+
+
+
+/*====================================*\
+  #SECTION-TREE-VIEW
+\*====================================*/
+
+.tree__node-list {
+  list-style: none;
+  display: none;
+}
+
+.tree > .tree__node-list {
+  display: block;
+}
+
+.tree__node--is-open > .tree__node-list {
+  display: block;
+}
+
+.tree__node {
+  padding-left: 20px;
+}
+
+.tree__node--is-folder:before {
+  content: "> ";
+}
+
+.tree__node--is-file:before {
+  content: "- ";
+}

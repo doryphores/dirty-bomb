@@ -6,11 +6,16 @@
     "start": "./node_modules/.bin/atom-shell ."
   },
   "dependencies": {
-    "nodegit": "https://github.com/nodegit/nodegit/tarball/master",
+    "nodegit": "^0.3.0",
     "github": "*",
     "promisify-node": "*",
     "node-forge": "*",
-    "fs-extra": "*"
+    "fs-extra": "*",
+    "node-jsx": "*",
+    "react": "*",
+    "chokidar": "*",
+    "immutable": "*",
+    "underscore": "*"
   },
   "devDependencies": {
     "atom-shell": "^0.21.2"

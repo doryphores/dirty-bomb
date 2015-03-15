@@ -20,6 +20,9 @@ app.on("ready", function () {
     height : 600
   });
 
+  mainWindow.maximize();
+  mainWindow.openDevTools();
+
   repository.setup(function (ready) {
     mainWindow.loadUrl("file://" + __dirname + "/" + (ready ? "index" : "setup") + ".html");
   });
@@ -27,6 +30,10 @@ app.on("ready", function () {
   mainWindow.on("closed", function () {
     mainWindow = null;
   });
+});
+
+ipc.on("dev.reload", function (event) {
+  mainWindow.reload();
 });
 
 ipc.on("authorize", function (event, data) {
