@@ -5,7 +5,7 @@ var _            = require("underscore");
 var Immutable    = require("immutable");
 var EventEmitter = require("events").EventEmitter;
 
-var contentDir = path.resolve(__dirname, "../../repo/content");
+var contentDir = path.resolve(__dirname, "../repo/content");
 
 
 /*=============================================*\

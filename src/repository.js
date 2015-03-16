@@ -1,17 +1,16 @@
+var app       = require("app");
 var promisify = require("promisify-node");
 var fs        = promisify("fs-extra");
 var path      = require("path");
 var nodegit   = require("nodegit");
 var forge     = require("node-forge");
-var GithubAPI = new require("github");
+var GithubAPI = require("github");
+var github    = new GithubAPI({version: "3.0.0"});
 
-var github  = new GithubAPI({
-  version: "3.0.0"
-});
+var repoDir = path.resolve(__dirname, "../repo");
 
-var repoDir = path.resolve(__dirname, "../../repo");
+var keyDir = path.resolve(app.getPath("userData"), "keys");
 
-var keyDir = path.resolve(__dirname, "../../keys");
 var privateKeyPath = path.join(keyDir, "id_rsa");
 var publicKeyPath  = path.join(keyDir, "id_rsa.pub");
 
