@@ -1,10 +1,14 @@
-var fs           = require("fs-extra");
-var path         = require("path");
-var chokidar     = require("chokidar");
-var _            = require("underscore");
-var Immutable    = require("immutable");
-var EventEmitter = require("events").EventEmitter;
+var fs           = require("fs-extra"),
+    path         = require("path"),
+    chokidar     = require("chokidar"),
+    _            = require("underscore"),
+    Immutable    = require("immutable"),
+    util         = require("util"),
+    EventEmitter = require("events").EventEmitter;
 
+
+// Content root
+// TODO: move this to some app configuration object
 var contentDir = path.resolve(__dirname, "../repo/content");
 
 
@@ -12,71 +16,124 @@ var contentDir = path.resolve(__dirname, "../repo/content");
   FileSystem object
 \*=============================================*/
 
-var FileSystem = new EventEmitter();
-
-module.exports = FileSystem;
-
-
-/*=============================================*\
-  Initialize content tree
-\*=============================================*/
-
-FileSystem.tree = (function () {
+var FileSystem = function (contentDir) {
+  // Root node
   var root = {
     name  : "root",
     path  : contentDir,
     depth : 0
   };
 
-  root.children = fileList(contentDir, root);
+  // Build content tree
+  root.children = nodeList(contentDir, root);
 
-  return Immutable.fromJS(root);
-}());
+  this.tree = Immutable.fromJS(root);
+
+  // Debounced event emitter this prevents emitting
+  // multiple change events close together
+  var emitChange = _.debounce(function () {
+    this.emit("change", this.tree);
+  }.bind(this), 100);
+
+  // Watch the file system for changes and update the tree accordingly
+  chokidar.watch(contentDir, {
+    persistent    : true,
+    ignoreInitial : true
+  }).on("all", function (event, nodePath) {
+    console.log("WATCHER", event, nodePath);
+    switch (event) {
+      case "unlink":
+      case "unlinkDir":
+        this.removeNode(nodePath, function (err, tree) {
+          if (!err) emitChange();
+        });
+        break;
+    }
+  }.bind(this));
+};
+
+util.inherits(FileSystem, EventEmitter);
+
+/**
+ * Finds a node in the content tree
+ *
+ * Callback arguments:
+ * 	@param {Error} An error object when path is not found (null otherwise)
+ * 	@param {Array} An index array for finding the node in the tree
+ *
+ * @param {string}   nodePath The absolute path of the node to find
+ * @param {Function} cb       Callback function
+ */
+FileSystem.prototype.findNode = function (nodePath, cb) {
+  var currentNode = this.tree;
+  var pathComponents = path.relative(contentDir, nodePath).split(path.sep);
+  
+  // Compute a list of tree indices for the given path
+  var indices = _.compact(pathComponents.map(function (nodeName) {
+    var children = currentNode.get("children");
+    for (var i = 0; i < children.size; i++) {
+      if (children.getIn([i, "name"]) == nodeName) {
+        currentNode = children.get(i);
+        return ["children", i];
+      }
+    }
+    return null;
+  }));
+
+  // Return an error when the index list does not match the given path
+  if (indices.length != pathComponents.length) {
+    return cb(new Error("Path not found: " + nodePath));
+  }
+
+  cb(null, _.flatten(indices));
+};
+
+
+/**
+ * Removes a node from the content tree
+ *
+ * Callback arguments:
+ * 	@param {Error} An error object when path is not found (null otherwise)
+ *
+ * @param {string}   nodePath The path of the node to remove
+ * @param {Function} cb       Callback function
+ */
+FileSystem.prototype.removeNode = function (nodePath, cb) {
+  this.findNode(nodePath, function (err, indices) {
+    if (err) return cb(err);
+
+    var nodeIndex = indices.pop();
+    
+    this.tree = this.tree.updateIn(indices, function (list) {
+      return list.splice(nodeIndex, 1);
+    });
+    
+    cb(null);
+  }.bind(this));
+};
 
 
 /*=============================================*\
-  File system watcher
+  Module exports: FileSystem instance
 \*=============================================*/
 
-var emitChange = _.debounce(function () {
-  FileSystem.emit("change");
-}, 100);
-
-chokidar.watch(contentDir, {
-  persistent    : true,
-  ignoreInitial : true
-}).on("unlink", function (nodePath) {
-  deleteNode(nodePath, function (err, tree) {
-    if (!err) {
-      FileSystem.tree = tree;
-      emitChange();
-    } else {
-      console.log(err);
-    }
-  });
-}).on("unlinkDir", function (nodePath) {
-  deleteNode(nodePath, function (err, tree) {
-    if (!err) {
-      FileSystem.tree = tree;
-      emitChange();
-    } else {
-      console.log(err);
-    }
-  });
-}).on("all", function (event, path) {
-  // if (event == "unlink" || event == "unlinkDir")
-  console.log("WATCHER", event, path);
-});
+module.exports = new FileSystem(path.resolve(__dirname, "../repo/content"));
 
 
 /*=============================================*\
   Private methods
 \*=============================================*/
 
-function fileList(rootPath, parent) {
+/**
+ * Builds a node tree from a path to the file system
+ * @param {string} rootPath Absolute path to a folder on the file system
+ * @param {object} parent   Parent node used to calculate depth
+ */
+function nodeList(rootPath, parent) {
   return fs.readdirSync(rootPath).map(function (filename) {
     var fullPath = path.join(rootPath, filename);
     var s = fs.statSync(fullPath);
+
     var node = {
       name  : filename,
       path  : fullPath,
@@ -85,9 +142,10 @@ function fileList(rootPath, parent) {
 
     if (s.isDirectory()) {
       node.type = "folder";
-      node.children = fileList(fullPath, node).sort(function (a, b) {
-        if (a.type === b.type) return a.name.localeCompare(b.name);
-        if (a.type === "file") return 1;
+      node.children = nodeList(fullPath, node).sort(function (a, b) {
+        // This sorts the nodes by type and name
+        if (a.type == b.type) return a.name.localeCompare(b.name);
+        if (a.type == "file") return 1;
         return -1;
       });
     } else {
@@ -95,34 +153,5 @@ function fileList(rootPath, parent) {
     }
 
     return node;
-  });
-}
-
-function findNode(nodePath, cb) {
-  var currentNode = FileSystem.tree;
-  var indices = path.relative(contentDir, nodePath).split(path.sep).map(function (nodeName) {
-    var children = currentNode.get("children");
-    for (var i = 0; i < children.size; i++) {
-      if (children.getIn([i, "name"]) == nodeName) {
-        currentNode = children.get(i);
-        return ["children", i];
-      }
-    }
-    cb(new Error("Path not found: " + nodePath));
-  });
-
-  cb(null, _.flatten(indices));
-}
-
-function deleteNode(nodePath, cb) {
-  findNode(nodePath, function (err, indices) {
-    if (!err) {
-      var nodeIndex = indices.pop();
-      cb(null, FileSystem.tree.updateIn(indices, function (list) {
-        return list.splice(nodeIndex, 1);
-      }));
-    } else {
-      cb(err);
-    }
   });
 }

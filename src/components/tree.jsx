@@ -1,26 +1,26 @@
 var React      = require("react");
 var FileSystem = require("../filesystem");
-var Immutable  = require("immutable");
 
 var Tree = React.createClass({
   getInitialState: function () {
     return {
-      root: FileSystem.tree
+      root     : FileSystem.tree,
+      selected : []
     };
   },
 
   componentDidMount: function () {
     FileSystem.on("change", function (tree) {
-      this.setState({root: FileSystem.tree});
+      this.setState({root: tree});
     }.bind(this));
   },
 
   componentWillUpdate: function () {
-    console.time("render");
+    console.time("Tree:render");
   },
 
   componentDidUpdate: function () {
-    console.timeEnd("render");
+    console.timeEnd("Tree:render");
   },
 
   render: function () {
@@ -69,8 +69,8 @@ Tree.FolderNode = React.createClass({
 
   render: function () {
     return (
-      <li className="tree__node tree__node--is-folder">
-        <span onClick={this.toggle}>{this.props.node.get("name")}</span>
+      <li className="tree__node">
+        <span className="tree__label tree__label--is-folder" onClick={this.toggle}>{this.props.node.get("name")}</span>
         <Tree.NodeList key={this.props.node.get("path") + "__children"} nodes={this.props.node.get("children")} />
       </li>
     );
@@ -84,8 +84,8 @@ Tree.FileNode = React.createClass({
 
   render: function () {
     return (
-      <li className="tree__node tree__node--is-file">
-        <span>{this.props.node.get("name")}</span>
+      <li className="tree__node">
+        <span className="tree__label tree__label--is-file">{this.props.node.get("name")}</span>
       </li>
     );
   }

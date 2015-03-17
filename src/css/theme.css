@@ -55,7 +55,7 @@ body {
     padding-left: 20px;
   }
 
-  .tree__node:hover:before {
+  .tree__node--is-selected:before {
     content: "";
     position: absolute;
     background: #ccc;
@@ -64,16 +64,17 @@ body {
     height: 24px;
   }
 
-  .tree__node span {
+  .tree__label {
+    position: relative;
     display: block;
     cursor: pointer;
   }
 
-  .tree__node span:hover {
+  .tree__label:hover {
     color: #000;
   }
 
-  .tree__node span:after {
+  .tree__label:before {
     content: "";
     display: inline-block;
     width: 20px;
@@ -85,14 +86,14 @@ body {
     background-size: auto 100%;
   }
 
-  .tree__node--is-folder > span {
+  .tree__node--is-folder > .tree__label {
     font-weight: bold;
   }
 
-  .tree__node--is-folder span:before {
+  .tree__label--is-folder:before {
     background-image: url(icons/folder.svg);
   }
 
-  .tree__node--is-file span:before {
+  .tree__label--is-file:before {
     background-image: url(icons/file.svg);
   }
