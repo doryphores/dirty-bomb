@@ -6,10 +6,12 @@ var fs           = require("fs-extra"),
     util         = require("util"),
     EventEmitter = require("events").EventEmitter;
 
-
 // Content root
 // TODO: move this to some app configuration object
 var contentDir = path.resolve(__dirname, "../repo/content");
+
+
+
 
 
 /*=============================================*\
@@ -53,6 +55,15 @@ var FileSystem = function (contentDir) {
 };
 
 util.inherits(FileSystem, EventEmitter);
+
+
+
+
+
+/*=============================================*\
+  Public methods
+\*=============================================*/
+
 
 /**
  * Finds a node in the content tree
@@ -113,6 +124,9 @@ FileSystem.prototype.removeNode = function (nodePath, cb) {
 };
 
 
+
+
+
 /*=============================================*\
   Module exports: FileSystem instance
 \*=============================================*/
@@ -120,12 +134,17 @@ FileSystem.prototype.removeNode = function (nodePath, cb) {
 module.exports = new FileSystem(path.resolve(__dirname, "../repo/content"));
 
 
+
+
+
 /*=============================================*\
   Private methods
 \*=============================================*/
 
+
 /**
  * Builds a node tree from a path to the file system
+ *
  * @param {string} rootPath Absolute path to a folder on the file system
  * @param {object} parent   Parent node used to calculate depth
  */

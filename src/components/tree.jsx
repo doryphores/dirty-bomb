@@ -1,16 +1,18 @@
 var React      = require("react");
-var FileSystem = require("../filesystem");
+var fileSystem = require("../filesystem");
 
-var Tree = React.createClass({
+
+var Tree = module.exports = React.createClass({
   getInitialState: function () {
     return {
-      root     : FileSystem.tree,
+      root     : fileSystem.tree,
       selected : []
     };
   },
 
   componentDidMount: function () {
-    FileSystem.on("change", function (tree) {
+    // Listen to file system changes
+    fileSystem.on("change", function (tree) {
       this.setState({root: tree});
     }.bind(this));
   },
@@ -32,7 +34,6 @@ var Tree = React.createClass({
   }
 });
 
-module.exports = Tree;
 
 Tree.NodeList = React.createClass({
   shouldComponentUpdate: function(nextProps, nextState) {
@@ -58,6 +59,7 @@ Tree.NodeList = React.createClass({
   }
 });
 
+
 Tree.FolderNode = React.createClass({
   shouldComponentUpdate: function(nextProps, nextState) {
     return this.props.node !== nextProps.node;
@@ -76,6 +78,7 @@ Tree.FolderNode = React.createClass({
     );
   }
 });
+
 
 Tree.FileNode = React.createClass({
   shouldComponentUpdate: function(nextProps, nextState) {
