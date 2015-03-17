@@ -2,6 +2,11 @@
 
 @import "reset.css";
 
+body {
+  font-family: Open Sans;
+  color: #535353;
+}
+
 /*====================================*\
   #SECTION-TOOLBAR
 \*====================================*/
@@ -22,9 +27,16 @@
   #SECTION-TREE-VIEW
 \*====================================*/
 
+.tree {
+  position: relative;
+  width: 300px;
+}
+
 .tree__node-list {
   list-style: none;
   display: none;
+  font-size: 14px;
+  line-height: 24px;
 }
 
 .tree > .tree__node-list {
@@ -35,14 +47,52 @@
   display: block;
 }
 
-.tree__node {
-  padding-left: 20px;
-}
+/* .tree__node {
+  position: relative;
+} */
 
-.tree__node--is-folder:before {
-  content: "> ";
-}
+  .tree__node .tree__node {
+    padding-left: 20px;
+  }
 
-.tree__node--is-file:before {
-  content: "- ";
-}
+  .tree__node:hover:before {
+    content: "";
+    position: absolute;
+    background: #ccc;
+    left: 0;
+    right: 0;
+    height: 24px;
+  }
+
+  .tree__node span {
+    display: block;
+    cursor: pointer;
+  }
+
+  .tree__node span:hover {
+    color: #000;
+  }
+
+  .tree__node span:after {
+    content: "";
+    display: inline-block;
+    width: 20px;
+    height: 16px;
+    margin-right: 4px;
+    vertical-align: middle;
+    background-repeat: no-repeat;
+    background-position: center center;
+    background-size: auto 100%;
+  }
+
+  .tree__node--is-folder > span {
+    font-weight: bold;
+  }
+
+  .tree__node--is-folder span:before {
+    background-image: url(icons/folder.svg);
+  }
+
+  .tree__node--is-file span:before {
+    background-image: url(icons/file.svg);
+  }
