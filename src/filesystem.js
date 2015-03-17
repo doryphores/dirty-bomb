@@ -38,22 +38,27 @@ FileSystem.tree = (function () {
   File system watcher
 \*=============================================*/
 
+var emitChange = _.debounce(function () {
+  FileSystem.emit("change");
+}, 100);
+
 chokidar.watch(contentDir, {
   persistent    : true,
   ignoreInitial : true
-// }).on("unlink", function (nodePath) {
-//   deleteNode(nodePath, function (err, tree) {
-//     if (!err) {
-//       FileSystem.emit("change", tree);
-//     } else {
-//       console.log(err);
-//     }
-//   });
+}).on("unlink", function (nodePath) {
+  deleteNode(nodePath, function (err, tree) {
+    if (!err) {
+      FileSystem.tree = tree;
+      emitChange();
+    } else {
+      console.log(err);
+    }
+  });
 }).on("unlinkDir", function (nodePath) {
   deleteNode(nodePath, function (err, tree) {
     if (!err) {
       FileSystem.tree = tree;
-      FileSystem.emit("change");
+      emitChange();
     } else {
       console.log(err);
     }
@@ -73,9 +78,9 @@ function fileList(rootPath, parent) {
     var fullPath = path.join(rootPath, filename);
     var s = fs.statSync(fullPath);
     var node = {
-      name     : filename,
-      path     : fullPath,
-      depth    : parent.depth + 1
+      name  : filename,
+      path  : fullPath,
+      depth : parent.depth + 1
     };
 
     if (s.isDirectory()) {

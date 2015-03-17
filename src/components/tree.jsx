@@ -9,18 +9,12 @@ var Tree = React.createClass({
     };
   },
 
-  // shouldComponentUpdate: function(nextProps, nextState) {
-  //   var changed = Immutable.is(this.state.root, nextState.root);
-  //   console.log("Tree", changed);
-  //   return changed;
-  // },
-
   componentDidMount: function () {
     FileSystem.on("change", function (tree) {
       this.setState({root: FileSystem.tree});
     }.bind(this));
   },
-  
+
   componentWillUpdate: function () {
     console.time("render");
   },
@@ -28,11 +22,11 @@ var Tree = React.createClass({
   componentDidUpdate: function () {
     console.timeEnd("render");
   },
-  
+
   render: function () {
     return (
       <div className="tree">
-        <Tree.NodeList nodes={this.state.root.get("children")} />
+        <Tree.NodeList key="root" nodes={this.state.root.get("children")} />
       </div>
     );
   }
@@ -42,27 +36,23 @@ module.exports = Tree;
 
 Tree.NodeList = React.createClass({
   shouldComponentUpdate: function(nextProps, nextState) {
-    var changed = Immutable.is(this.props.nodes, nextProps.nodes);
-    console.log("NodeList", changed);
-    return changed;
+    return this.props.nodes !== nextProps.nodes;
   },
-  
+
   render: function () {
-    var nodes = this.props.nodes.map(function (node) {
-      if (node.get("type") === "folder") {
-        return (
-          <Tree.FolderNode node={node} />
-        );
-      } else {
-        return (
-          <Tree.FileNode node={node} />
-        );
-      }
-    });
-    
     return (
       <ul className="tree__node-list">
-        {nodes}
+        {this.props.nodes.map(function (node) {
+          if (node.get("type") === "folder") {
+            return (
+              <Tree.FolderNode key={node.get("path")} node={node} />
+            );
+          } else {
+            return (
+              <Tree.FileNode key={node.get("path")} node={node} />
+            );
+          }
+        })}
       </ul>
     );
   }
@@ -70,20 +60,18 @@ Tree.NodeList = React.createClass({
 
 Tree.FolderNode = React.createClass({
   shouldComponentUpdate: function(nextProps, nextState) {
-    var changed = Immutable.is(this.props.node, nextProps.node);
-    console.log("FolderNode", this.props.node.get("name"), changed);
-    return changed;
+    return this.props.node !== nextProps.node;
   },
-  
+
   toggle: function (event) {
     event.currentTarget.parentNode.classList.toggle("tree__node--is-open");
   },
-  
+
   render: function () {
     return (
       <li className="tree__node tree__node--is-folder">
         <span onClick={this.toggle}>{this.props.node.get("name")}</span>
-        <Tree.NodeList nodes={this.props.node.get("children")} />
+        <Tree.NodeList key={this.props.node.get("path") + "__children"} nodes={this.props.node.get("children")} />
       </li>
     );
   }
@@ -91,11 +79,9 @@ Tree.FolderNode = React.createClass({
 
 Tree.FileNode = React.createClass({
   shouldComponentUpdate: function(nextProps, nextState) {
-    var changed = Immutable.is(this.props.node, nextProps.node);
-    console.log("FileNode", changed);
-    return changed;
+    return this.props.node !== nextProps.node;
   },
-  
+
   render: function () {
     return (
       <li className="tree__node tree__node--is-file">
