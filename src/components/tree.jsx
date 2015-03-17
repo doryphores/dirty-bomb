@@ -45,11 +45,11 @@ Tree.NodeList = React.createClass({
         {this.props.nodes.map(function (node) {
           if (node.get("type") === "folder") {
             return (
-              <Tree.FolderNode key={node.get("path")} node={node} />
+              <Tree.FolderNode key={node.get("name")} node={node} />
             );
           } else {
             return (
-              <Tree.FileNode key={node.get("path")} node={node} />
+              <Tree.FileNode key={node.get("name")} node={node} />
             );
           }
         })}
@@ -71,7 +71,7 @@ Tree.FolderNode = React.createClass({
     return (
       <li className="tree__node">
         <span className="tree__label tree__label--is-folder" onClick={this.toggle}>{this.props.node.get("name")}</span>
-        <Tree.NodeList key={this.props.node.get("path") + "__children"} nodes={this.props.node.get("children")} />
+        <Tree.NodeList key={this.props.node.get("name") + "__children"} nodes={this.props.node.get("children")} />
       </li>
     );
   }
