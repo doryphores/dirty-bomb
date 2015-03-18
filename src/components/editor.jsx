@@ -49,7 +49,7 @@ var Editor = React.createClass({
       preview  : ""
     };
   },
-  
+
   componentDidMount: function () {
     EventListener.on("node.selected", function (nodePath) {
       this.props.fileSystem.readFile(nodePath, function (fileContent) {
@@ -57,13 +57,13 @@ var Editor = React.createClass({
       }.bind(this));
     }.bind(this));
   },
-  
+
   handleChange: function (event) {
     this.setState({
       markdown : event.target.value
     });
   },
-  
+
   render: function () {
     var previewHTML = converter.makeHtml(this.state.markdown);
     return (

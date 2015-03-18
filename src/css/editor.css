@@ -16,6 +16,9 @@ textarea {
   border: none;
   background: #ccc;
   font-family: Source Code Pro;
+  font-size: 14px;
+  font-weight: 600;
+  outline: none;
 }
 
 .preview {
