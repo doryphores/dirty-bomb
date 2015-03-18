@@ -1,6 +1,9 @@
-var React    = require("react");
-var Showdown = require("showdown");
-var path     = require("path");
+var React      = require("react");
+var Showdown   = require("showdown");
+var path       = require("path");
+var CodeMirror = require("codemirror");
+
+require("codemirror/mode/markdown/markdown");
 
 var imageRoot = path.resolve(__dirname, "../../repo/public/media");
 
@@ -51,11 +54,30 @@ var Editor = React.createClass({
   },
 
   componentDidMount: function () {
+    this.editor = CodeMirror.fromTextArea(this.refs.textarea.getDOMNode(), {
+      mode  : "markdown",
+      theme : "base16-dark"
+    });
+
+    this.editor.on("change", function () {
+      this.setState({
+        markdown: this.editor.getValue()
+      });
+    }.bind(this));
+
     EventListener.on("node.selected", function (nodePath) {
       this.props.fileSystem.readFile(nodePath, function (fileContent) {
         this.setState({markdown: fileContent});
       }.bind(this));
     }.bind(this));
+  },
+
+  shouldComponentUpdate: function(nextProps, nextState) {
+    return this.state.markdown !== nextState.markdown;
+  },
+
+  componentDidUpdate: function () {
+    this.editor.setValue(this.state.markdown);
   },
 
   handleChange: function (event) {
@@ -68,7 +90,7 @@ var Editor = React.createClass({
     var previewHTML = converter.makeHtml(this.state.markdown);
     return (
       <div className="editor">
-        <textarea value={this.state.markdown} onChange={this.handleChange} />
+        <textarea ref="textarea" value={this.state.markdown} onChange={this.handleChange} />
         <div className="preview" dangerouslySetInnerHTML={{__html: previewHTML}} />
       </div>
     );

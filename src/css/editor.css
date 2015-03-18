@@ -21,6 +21,15 @@ textarea {
   outline: none;
 }
 
+.CodeMirror {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 50%;
+  height: 100%;
+}
+
 .preview {
   position: absolute;
   top: 0;

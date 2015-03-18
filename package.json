@@ -20,7 +20,8 @@
     "chokidar": "*",
     "immutable": "*",
     "underscore": "*",
-    "showdown": "*"
+    "showdown": "*",
+    "codemirror": "*"
   },
   "devDependencies": {
     "atom-shell": "0.21.2"
