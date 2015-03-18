@@ -65,7 +65,7 @@ var Editor = React.createClass({
       });
     }.bind(this));
 
-    EventListener.on("node.selected", function (nodePath) {
+    EventListener.on("file.open", function (nodePath) {
       this.props.fileSystem.readFile(nodePath, function (fileContent) {
         this.setState({markdown: fileContent});
       }.bind(this));

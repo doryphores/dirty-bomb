@@ -28,10 +28,6 @@ var Tree = React.createClass({
     this.props.fileSystem.on("change", function (tree) {
       this.setState({root: tree});
     }.bind(this));
-    
-    EventListener.on("node.selected", function (nodePath) {
-      console.log("File selected", nodePath)
-    });
   },
 
   componentWillUpdate: function () {
@@ -109,19 +105,24 @@ Tree.FileNode = React.createClass({
   },
   
   handleClick: function () {
-    if (!this.state.selected) {
-      // This node is being selected. Broadcast this to any listeners
-      // and listen to any future broadcasts. This ensures a single node
-      // is selected at any time.
-      EventListener.emit("node.selected", this.props.node.get("path"));
-      EventListener.once("node.selected", function (nodePath) {
-        if (this.state.selected && nodePath != this.props.node.get("path")) {
-          this.setState({selected: false});
-        }
-      }.bind(this));
-    }
+    if (this.state.selected) return;
 
-    this.setState({selected: !this.state.selected});
+    // This node is being selected. Broadcast this to any listeners
+    // and listen to any future broadcasts. This ensures a single node
+    // is selected at any time.
+    EventListener.emit("node.selected", this.props.node.get("path"));
+    
+    EventListener.once("node.selected", function (nodePath) {
+      if (this.state.selected && nodePath != this.props.node.get("path")) {
+        this.setState({selected: false});
+      }
+    }.bind(this));
+
+    this.setState({selected: true});
+  },
+  
+  handleDoubleClick: function () {
+    EventListener.emit("file.open", this.props.node.get("path"));
   },
   
   nodeClasses: function () {
@@ -130,7 +131,7 @@ Tree.FileNode = React.createClass({
 
   render: function () {
     return (
-      <li className={this.nodeClasses()} onClick={this.handleClick}>
+      <li className={this.nodeClasses()} onClick={this.handleClick} onDoubleClick={this.handleDoubleClick}>
         <span className="tree__label tree__label--is-file">{this.props.node.get("name")}</span>
       </li>
     );
