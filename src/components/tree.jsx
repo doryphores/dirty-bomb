@@ -1,6 +1,19 @@
 var React = require("react");
 
+// Local references to UI event listener
+
 var EventListener;
+
+module.exports = function (listener) {
+  EventListener = listener;
+  return Tree;
+};
+
+
+/*=============================================*\
+  Component definitions
+\*=============================================*/
+
 
 var Tree = React.createClass({
   getInitialState: function () {
@@ -37,12 +50,6 @@ var Tree = React.createClass({
     );
   }
 });
-
-
-module.exports = function (listener) {
-  EventListener = listener;
-  return Tree;
-};
 
 
 Tree.NodeList = React.createClass({

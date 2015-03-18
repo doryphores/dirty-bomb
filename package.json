@@ -19,7 +19,8 @@
     "react": "*",
     "chokidar": "*",
     "immutable": "*",
-    "underscore": "*"
+    "underscore": "*",
+    "showdown": "*"
   },
   "devDependencies": {
     "atom-shell": "0.21.2"
