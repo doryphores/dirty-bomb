@@ -1,0 +1,17 @@
+.editor {
+  position: absolute;
+  left: 300px;
+  top: 30px;
+  right: 0;
+  bottom: 0;
+  overflow: auto;
+}
+
+textarea {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  font-family: Source Code Pro;
+}

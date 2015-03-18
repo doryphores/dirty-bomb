@@ -1,13 +1,30 @@
-var React    = require("react");
-var Toolbar  = require("./toolbar");
-var TreeView = require("./tree");
+var React      = require("react");
+var FileSystem = require("../filesystem");
+var path       = require("path");
+var EventEmitter = require("events").EventEmitter;
 
-React.render(
-  <Toolbar />,
-  document.getElementById("js-toolbar")
-);
+// Setup a listener to communicate between components
+var eventListener = new EventEmitter();
 
-React.render(
-  <TreeView />,
-  document.getElementById("js-tree-view")
-);
+var Toolbar = require("./toolbar");
+var Tree    = require("./tree")(eventListener);
+var Editor  = require("./editor")(eventListener);
+
+// Content root
+// TODO: move this to some app configuration object
+var contentDir = path.resolve(__dirname, "../../repo/content");
+
+var fileSystem = new FileSystem(contentDir);
+
+fileSystem.on("ready", function () {
+  React.render(
+    <div>
+      <Toolbar />
+      <Tree fileSystem={fileSystem} />
+      <Editor fileSystem={fileSystem} />
+    </div>,
+    document.getElementById("js-app")
+  );
+});
+
+fileSystem.init();

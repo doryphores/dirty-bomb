@@ -6,28 +6,36 @@ var fs           = require("fs-extra"),
     util         = require("util"),
     EventEmitter = require("events").EventEmitter;
 
-// Content root
-// TODO: move this to some app configuration object
-var contentDir = path.resolve(__dirname, "../repo/content");
+
+/*=============================================*\
+  FileSystem object
+\*=============================================*/
+
+var FileSystem = module.exports = function (rootPath) {
+  this.rootPath = rootPath;
+};
+
+util.inherits(FileSystem, EventEmitter);
 
 
 
 
 
 /*=============================================*\
-  FileSystem object
+  Public methods
 \*=============================================*/
 
-var FileSystem = function (contentDir) {
+
+FileSystem.prototype.init = function () {
   // Root node
   var root = {
     name  : "root",
-    path  : contentDir,
+    path  : this.rootPath,
     depth : 0
   };
 
   // Build content tree
-  root.children = nodeList(contentDir, root);
+  root.children = nodeList(this.rootPath, root);
 
   this.tree = Immutable.fromJS(root);
 
@@ -38,7 +46,7 @@ var FileSystem = function (contentDir) {
   }.bind(this), 100);
 
   // Watch the file system for changes and update the tree accordingly
-  chokidar.watch(contentDir, {
+  chokidar.watch(this.rootPath, {
     persistent    : true,
     ignoreInitial : true
   }).on("all", function (event, nodePath) {
@@ -52,17 +60,19 @@ var FileSystem = function (contentDir) {
         break;
     }
   }.bind(this));
+  
+  this.emit("ready");
 };
 
-util.inherits(FileSystem, EventEmitter);
 
-
-
-
-
-/*=============================================*\
-  Public methods
-\*=============================================*/
+FileSystem.prototype.readFile = function (nodePath, cb) {
+  fs.readFile(nodePath, {
+    encoding: "utf-8"
+  }, function (err, data) {
+    if (!err) cb(data);
+    else console.log(err);
+  });
+};
 
 
 /**
@@ -122,16 +132,6 @@ FileSystem.prototype.removeNode = function (nodePath, cb) {
     cb(null);
   }.bind(this));
 };
-
-
-
-
-
-/*=============================================*\
-  Module exports: FileSystem instance
-\*=============================================*/
-
-module.exports = new FileSystem(path.resolve(__dirname, "../repo/content"));
 
 
 
