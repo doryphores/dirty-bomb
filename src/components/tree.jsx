@@ -1,13 +1,5 @@
-var React = require("react");
-
-// Local references to UI event listener
-
-var EventListener;
-
-module.exports = function (listener) {
-  EventListener = listener;
-  return Tree;
-};
+var React         = require("react"),
+    EventListener = require("../globalevents");
 
 
 /*=============================================*\
@@ -15,7 +7,7 @@ module.exports = function (listener) {
 \*=============================================*/
 
 
-var Tree = React.createClass({
+var Tree = module.exports = React.createClass({
   getInitialState: function () {
     return {
       root         : this.props.fileSystem.tree,

@@ -1,19 +1,9 @@
-var React        = require("react");
-var FileSystem   = require("../filesystem");
-var path         = require("path");
-var EventEmitter = require("events").EventEmitter;
-
-// Setup a listener to communicate between components
-// TODO: this could be in its own module and required
-// by any components that wants to communicate
-
-var eventListener = new EventEmitter();
-
-// React components
-
-var Toolbar = require("./toolbar");
-var Tree    = require("./tree")(eventListener);
-var Editor  = require("./editor")(eventListener);
+var React        = require("react"),
+    FileSystem   = require("../filesystem"),
+    path         = require("path"),
+    Toolbar      = require("./toolbar"),
+    Tree         = require("./tree"),
+    Editor       = require("./editor");
 
 // Content root
 // TODO: move this to some app configuration object

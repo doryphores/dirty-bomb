@@ -1,7 +1,8 @@
-var React      = require("react");
-var Showdown   = require("showdown");
-var path       = require("path");
-var CodeMirror = require("codemirror");
+var React         = require("react"),
+    Showdown      = require("showdown"),
+    path          = require("path"),
+    CodeMirror    = require("codemirror"),
+    EventListener = require("../globalevents");
 
 require("codemirror/mode/markdown/markdown");
 
@@ -30,22 +31,13 @@ var stripFrontMatter = function (converter) {
 
 var converter = new Showdown.converter({extensions: [imageFix, stripFrontMatter]});
 
-// Local references to UI event listener
-
-var EventListener;
-
-module.exports = function (listener) {
-  EventListener = listener;
-  return Editor;
-};
-
 
 /*=============================================*\
   Component definitions
 \*=============================================*/
 
 
-var Editor = React.createClass({
+var Editor = module.exports = React.createClass({
   getInitialState: function () {
     return {
       markdown : "",
