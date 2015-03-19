@@ -10,16 +10,17 @@
     "start": "./node_modules/.bin/atom-shell ."
   },
   "dependencies": {
+    "underscore": "*",
+    "async": "*",
+    "promisify-node": "*",
+    "fs-extra": "*",
+    "chokidar": "*",
     "nodegit": "*",
     "github": "*",
-    "promisify-node": "*",
     "node-forge": "*",
-    "fs-extra": "*",
     "node-jsx": "*",
     "react": "*",
-    "chokidar": "*",
     "immutable": "*",
-    "underscore": "*",
     "showdown": "*",
     "codemirror": "*"
   },

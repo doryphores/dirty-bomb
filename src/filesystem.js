@@ -2,6 +2,7 @@ var fs           = require("fs-extra"),
     path         = require("path"),
     chokidar     = require("chokidar"),
     _            = require("underscore"),
+    async        = require("async"),
     Immutable    = require("immutable"),
     util         = require("util"),
     EventEmitter = require("events").EventEmitter;
@@ -11,14 +12,12 @@ var fs           = require("fs-extra"),
   FileSystem object
 \*=============================================*/
 
+
 var FileSystem = module.exports = function (rootPath) {
   this.rootPath = rootPath;
 };
 
 util.inherits(FileSystem, EventEmitter);
-
-
-
 
 
 /*=============================================*\
@@ -27,20 +26,27 @@ util.inherits(FileSystem, EventEmitter);
 
 
 FileSystem.prototype.init = function () {
-  // Root node
-  var root = {
-    name  : "root",
-    path  : this.rootPath,
-    depth : 0
-  };
-
   // Build content tree
-  root.children = nodeList(this.rootPath, root);
+  nodeList({
+    name : "root",
+    path : this.rootPath,
+    type : "folder"
+  }, function (err, root) {
+    if (err) {
+      console.log("ERROR", err);
+    } else {
+      console.log(root);
+      // Make tree immutable
+      this.tree = Immutable.fromJS(root);
+      this.startWatching();
+      this.emit("ready");
+    }
+  }.bind(this));
+};
 
-  this.tree = Immutable.fromJS(root);
-
-  // Debounced event emitter this prevents emitting
-  // multiple change events close together
+FileSystem.prototype.startWatching = function () {
+  // Create a debounced event emitter. This prevents emitting
+  // too many change events close to eachother.
   var emitChange = _.debounce(function () {
     this.emit("change", this.tree);
   }.bind(this), 100);
@@ -52,18 +58,21 @@ FileSystem.prototype.init = function () {
   }).on("all", function (event, nodePath) {
     console.log("WATCHER", event, nodePath);
     switch (event) {
+      // case "addDir":
+      // case "add":
+      //   this.addNode(nodePath), function (err) {
+      //     if (!err) emitChange();
+      //   }
+      //   break;
       case "unlink":
       case "unlinkDir":
-        this.removeNode(nodePath, function (err, tree) {
+        this.removeNode(nodePath, function (err) {
           if (!err) emitChange();
         });
         break;
     }
   }.bind(this));
-  
-  this.emit("ready");
-};
-
+}
 
 FileSystem.prototype.readFile = function (nodePath, cb) {
   fs.readFile(nodePath, {
@@ -88,7 +97,7 @@ FileSystem.prototype.readFile = function (nodePath, cb) {
 FileSystem.prototype.findNode = function (nodePath, cb) {
   var currentNode = this.tree;
   var pathComponents = path.relative(contentDir, nodePath).split(path.sep);
-  
+
   // Compute a list of tree indices for the given path
   var indices = _.compact(pathComponents.map(function (nodeName) {
     var children = currentNode.get("children");
@@ -124,17 +133,14 @@ FileSystem.prototype.removeNode = function (nodePath, cb) {
     if (err) return cb(err);
 
     var nodeIndex = indices.pop();
-    
+
     this.tree = this.tree.updateIn(indices, function (list) {
       return list.splice(nodeIndex, 1);
     });
-    
+
     cb(null);
   }.bind(this));
 };
-
-
-
 
 
 /*=============================================*\
@@ -142,35 +148,38 @@ FileSystem.prototype.removeNode = function (nodePath, cb) {
 \*=============================================*/
 
 
-/**
- * Builds a node tree from a path to the file system
- *
- * @param {string} rootPath Absolute path to a folder on the file system
- * @param {object} parent   Parent node used to calculate depth
- */
-function nodeList(rootPath, parent) {
-  return fs.readdirSync(rootPath).map(function (filename) {
-    var fullPath = path.join(rootPath, filename);
-    var s = fs.statSync(fullPath);
+function buildNode(node, callback) {
+  fs.readdir(node.path, function (err, list) {
+    if (err) return callback(err);
 
-    var node = {
-      name  : filename,
-      path  : fullPath,
-      depth : parent.depth + 1
-    };
+    async.map(list, function (filename, mapCallback) {
+      var childNodePath = path.join(node.path, filename);
 
-    if (s.isDirectory()) {
-      node.type = "folder";
-      node.children = nodeList(fullPath, node).sort(function (a, b) {
-        // This sorts the nodes by type and name
-        if (a.type == b.type) return a.name.localeCompare(b.name);
-        if (a.type == "file") return 1;
-        return -1;
+      fs.stat(childNodePath, function (err, stat) {
+        if (err) return mapCallback(err);
+
+        if (stat.isDirectory()) {
+          // It's a directory so create it and build its children
+          buildNode({
+            name : filename,
+            path : childNodePath,
+            type : "folder"
+          }, function (err, folderNode) {
+            mapCallback(null, folderNode);
+          });
+        } else {
+          // It's a file so create it
+          mapCallback(null, {
+            name : filename,
+            path : childNodePath,
+            type : "file"
+          });
+        }
       });
-    } else {
-      node.type = "file";
-    }
-
-    return node;
+    }, function (err, children) {
+      // We're done with the mapping so add the children to the node
+      node.children = children;
+      callback(null, node);
+    });
   });
 }
