@@ -27,15 +27,14 @@ util.inherits(FileSystem, EventEmitter);
 
 FileSystem.prototype.init = function () {
   // Build content tree
-  nodeList({
+  buildNode({
     name : "root",
     path : this.rootPath,
     type : "folder"
   }, function (err, root) {
     if (err) {
-      console.log("ERROR", err);
+      // TODO: handle error
     } else {
-      console.log(root);
       // Make tree immutable
       this.tree = Immutable.fromJS(root);
       this.startWatching();
@@ -152,7 +151,7 @@ function buildNode(node, callback) {
   fs.readdir(node.path, function (err, list) {
     if (err) return callback(err);
 
-    async.map(list, function (filename, mapCallback) {
+    async.map(list, function (filename, next) {
       var childNodePath = path.join(node.path, filename);
 
       fs.stat(childNodePath, function (err, stat) {
@@ -165,11 +164,11 @@ function buildNode(node, callback) {
             path : childNodePath,
             type : "folder"
           }, function (err, folderNode) {
-            mapCallback(null, folderNode);
+            next(null, folderNode);
           });
         } else {
           // It's a file so create it
-          mapCallback(null, {
+          next(null, {
             name : filename,
             path : childNodePath,
             type : "file"
@@ -178,7 +177,11 @@ function buildNode(node, callback) {
       });
     }, function (err, children) {
       // We're done with the mapping so add the children to the node
-      node.children = children;
+      node.children = children.sort(function (a, b) {
+        if (a.type == b.type) return a.name.localeCompare(b.name);
+        if (a.type == "folder") return -1;
+        return 1;
+      });
       callback(null, node);
     });
   });
