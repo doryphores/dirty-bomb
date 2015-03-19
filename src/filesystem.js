@@ -43,6 +43,7 @@ FileSystem.prototype.init = function () {
   }.bind(this));
 };
 
+
 FileSystem.prototype.startWatching = function () {
   // Create a debounced event emitter. This prevents emitting
   // too many change events close to eachother.
@@ -88,33 +89,29 @@ FileSystem.prototype.readFile = function (nodePath, cb) {
  *
  * Callback arguments:
  * 	@param {Error} An error object when path is not found (null otherwise)
- * 	@param {Array} An index array for finding the node in the tree
+ * 	@param {Array} An address array for finding the node in the tree
  *
  * @param {string}   nodePath The absolute path of the node to find
  * @param {Function} cb       Callback function
  */
-FileSystem.prototype.findNode = function (nodePath, cb) {
-  var currentNode = this.tree;
-  var pathComponents = path.relative(contentDir, nodePath).split(path.sep);
+FileSystem.prototype.findNode = function (nodePath, done) {
+  var pathComponents = path.relative(this.rootPath, nodePath).split(path.sep);
 
-  // Compute a list of tree indices for the given path
-  var indices = _.compact(pathComponents.map(function (nodeName) {
-    var children = currentNode.get("children");
-    for (var i = 0; i < children.size; i++) {
-      if (children.getIn([i, "name"]) == nodeName) {
-        currentNode = children.get(i);
-        return ["children", i];
+  async.reduce(pathComponents, [], function (address, nodeName, next) {
+    if (this.tree.getIn(address.concat("children")).every(function (node, index) {
+      if (node.get("name") == nodeName) {
+        next(null, address.concat("children", index));
+        // Returning false here breaks out of the loop
+        return false;
       }
+
+      // Returning true means "no match"
+      return true;
+    })) {
+      // We get here when non of the child nodes match the node name
+      next(new Error("Path not found: " + nodeName));
     }
-    return null;
-  }));
-
-  // Return an error when the index list does not match the given path
-  if (indices.length != pathComponents.length) {
-    return cb(new Error("Path not found: " + nodePath));
-  }
-
-  cb(null, _.flatten(indices));
+  }.bind(this), done);
 };
 
 
@@ -128,13 +125,11 @@ FileSystem.prototype.findNode = function (nodePath, cb) {
  * @param {Function} cb       Callback function
  */
 FileSystem.prototype.removeNode = function (nodePath, cb) {
-  this.findNode(nodePath, function (err, indices) {
+  this.findNode(nodePath, function (err, address) {
     if (err) return cb(err);
 
-    var nodeIndex = indices.pop();
-
-    this.tree = this.tree.updateIn(indices, function (list) {
-      return list.splice(nodeIndex, 1);
+    this.tree = this.tree.updateIn(_.initial(address), function (list) {
+      return list.delete(_.last(address));
     });
 
     cb(null);
