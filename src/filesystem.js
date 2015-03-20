@@ -117,6 +117,11 @@ FileSystem.prototype.startWatching = function () {
   }).on("all", function (event, nodePath) {
     console.log("WATCHER", event, nodePath);
     switch (event) {
+      case "add":
+        this.addFileNode(nodePath, function (err) {
+          if (!err) emitChange();
+        });
+        break;
       case "addDir":
         this.addFolderNode(nodePath, function (err) {
           if (!err) emitChange();
@@ -193,8 +198,29 @@ FileSystem.prototype.removeNode = function (nodePath, cb) {
 };
 
 
+FileSystem.prototype.addFileNode = function (nodePath, done) {
+  this.addFolderNode(path.dirname(nodePath), function (err, address) {
+    if (err) return done(err);
+
+    this.tree = this.tree.updateIn(address.concat("children"), function (children) {
+      return children.push(Immutable.Map({
+        name : path.basename(nodePath),
+        path : nodePath,
+        type : "file"
+      })).sort(nodeCompare);
+    });
+
+    done();
+  }.bind(this));
+};
+
+
 FileSystem.prototype.addFolderNode = function (nodePath, done) {
   var self = this;
+
+  if (nodePath === ".") {
+    return done(null, []);
+  }
 
   async.reduce(nodePath.split(path.sep), [], function (address, nodeName, next) {
     var currentNode = self.tree.getIn(address);
@@ -224,7 +250,6 @@ FileSystem.prototype.addFolderNode = function (nodePath, done) {
       next(null, address.concat("children", index));
     }
   }, function (err, address) {
-    console.log(address);
-    done(null);
+    done(null, address);
   });
 };
