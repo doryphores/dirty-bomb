@@ -27,9 +27,9 @@ util.inherits(FileSystem, EventEmitter);
 
 FileSystem.prototype.init = function () {
   // Build content tree
-  buildNode({
+  this.buildNode({
     name : "root",
-    path : this.rootPath,
+    path : "",
     type : "folder"
   }, function (err, root) {
     if (err) {
@@ -44,6 +44,54 @@ FileSystem.prototype.init = function () {
 };
 
 
+FileSystem.prototype.absolutePath = function (nodePath) {
+  return path.join(this.rootPath, nodePath);
+};
+
+
+FileSystem.prototype.buildNode = function (node, callback) {
+  var self = this;
+
+  fs.readdir(this.absolutePath(node.path), function (err, list) {
+    if (err) return callback(err);
+
+    async.map(list, function (filename, next) {
+      var childNodePath = path.join(node.path, filename);
+
+      fs.stat(self.absolutePath(childNodePath), function (err, stat) {
+        if (err) return mapCallback(err);
+
+        if (stat.isDirectory()) {
+          // It's a directory so create it and build its children
+          self.buildNode({
+            name : filename,
+            path : childNodePath,
+            type : "folder"
+          }, function (err, folderNode) {
+            next(null, folderNode);
+          });
+        } else {
+          // It's a file so create it
+          next(null, {
+            name : filename,
+            path : childNodePath,
+            type : "file"
+          });
+        }
+      });
+    }, function (err, children) {
+      // We're done with the mapping so add the children to the node
+      node.children = children.sort(function (a, b) {
+        if (a.type == b.type) return a.name.localeCompare(b.name);
+        if (a.type == "folder") return -1;
+        return 1;
+      });
+      callback(null, node);
+    });
+  });
+};
+
+
 FileSystem.prototype.startWatching = function () {
   // Create a debounced event emitter. This prevents emitting
   // too many change events close to eachother.
@@ -52,9 +100,10 @@ FileSystem.prototype.startWatching = function () {
   }.bind(this), 100);
 
   // Watch the file system for changes and update the tree accordingly
-  chokidar.watch(this.rootPath, {
+  chokidar.watch(".", {
     persistent    : true,
-    ignoreInitial : true
+    ignoreInitial : true,
+    cwd           : this.rootPath
   }).on("all", function (event, nodePath) {
     console.log("WATCHER", event, nodePath);
     switch (event) {
@@ -75,7 +124,7 @@ FileSystem.prototype.startWatching = function () {
 }
 
 FileSystem.prototype.readFile = function (nodePath, cb) {
-  fs.readFile(nodePath, {
+  fs.readFile(this.absolutePath(nodePath), {
     encoding: "utf-8"
   }, function (err, data) {
     if (!err) cb(data);
@@ -95,9 +144,7 @@ FileSystem.prototype.readFile = function (nodePath, cb) {
  * @param {Function} cb       Callback function
  */
 FileSystem.prototype.findNode = function (nodePath, done) {
-  var pathComponents = path.relative(this.rootPath, nodePath).split(path.sep);
-
-  async.reduce(pathComponents, [], function (address, nodeName, next) {
+  async.reduce(nodePath.split(path.sep), [], function (address, nodeName, next) {
     if (this.tree.getIn(address.concat("children")).every(function (node, index) {
       if (node.get("name") == nodeName) {
         next(null, address.concat("children", index));
@@ -137,47 +184,3 @@ FileSystem.prototype.removeNode = function (nodePath, cb) {
 };
 
 
-/*=============================================*\
-  Private methods
-\*=============================================*/
-
-
-function buildNode(node, callback) {
-  fs.readdir(node.path, function (err, list) {
-    if (err) return callback(err);
-
-    async.map(list, function (filename, next) {
-      var childNodePath = path.join(node.path, filename);
-
-      fs.stat(childNodePath, function (err, stat) {
-        if (err) return mapCallback(err);
-
-        if (stat.isDirectory()) {
-          // It's a directory so create it and build its children
-          buildNode({
-            name : filename,
-            path : childNodePath,
-            type : "folder"
-          }, function (err, folderNode) {
-            next(null, folderNode);
-          });
-        } else {
-          // It's a file so create it
-          next(null, {
-            name : filename,
-            path : childNodePath,
-            type : "file"
-          });
-        }
-      });
-    }, function (err, children) {
-      // We're done with the mapping so add the children to the node
-      node.children = children.sort(function (a, b) {
-        if (a.type == b.type) return a.name.localeCompare(b.name);
-        if (a.type == "folder") return -1;
-        return 1;
-      });
-      callback(null, node);
-    });
-  });
-}

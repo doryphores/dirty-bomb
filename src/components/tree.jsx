@@ -28,7 +28,7 @@ var Tree = React.createClass({
     this.props.fileSystem.on("change", function (tree) {
       this.setState({root: tree});
     }.bind(this));
-    
+
     EventListener.on("node.selected", function (nodePath) {
       console.log("File selected", nodePath)
     });
@@ -59,7 +59,7 @@ Tree.NodeList = React.createClass({
 
   render: function () {
     var selectedNode = this.props.selectedNode;
-    
+
     return (
       <ul className="tree__node-list">
         {this.props.nodes.map(function (node) {
@@ -103,27 +103,27 @@ Tree.FileNode = React.createClass({
   getInitialState: function () {
     return {selected: false};
   },
-  
+
   shouldComponentUpdate: function(nextProps, nextState) {
     return this.props.node !== nextProps.node || this.state.selected != nextState.selected;
   },
-  
-  handleClick: function () {
-    if (!this.state.selected) {
-      // This node is being selected. Broadcast this to any listeners
-      // and listen to any future broadcasts. This ensures a single node
-      // is selected at any time.
-      EventListener.emit("node.selected", this.props.node.get("path"));
-      EventListener.once("node.selected", function (nodePath) {
-        if (this.state.selected && nodePath != this.props.node.get("path")) {
-          this.setState({selected: false});
-        }
-      }.bind(this));
-    }
 
-    this.setState({selected: !this.state.selected});
+  handleClick: function () {
+    if (this.state.selected) return;
+
+    // This node is being selected. Broadcast this to any listeners
+    // and listen to any future broadcasts. This ensures a single node
+    // is selected at any time.
+    EventListener.emit("node.selected", this.props.node.get("path"));
+    EventListener.once("node.selected", function (nodePath) {
+      if (this.isMounted() && this.state.selected && nodePath != this.props.node.get("path")) {
+        this.setState({selected: false});
+      }
+    }.bind(this));
+
+    this.setState({selected: true});
   },
-  
+
   nodeClasses: function () {
     return "tree__node" + (this.state.selected ? " tree__node--is-selected" : "");
   },
