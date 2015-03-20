@@ -36,7 +36,7 @@ FileSystem.prototype.init = function () {
       // TODO: handle error
     } else {
       // Make tree immutable
-      this.tree = Immutable.fromJS(root);
+      this.tree = root;
       this.startWatching();
       this.emit("ready");
     }
@@ -49,17 +49,23 @@ FileSystem.prototype.absolutePath = function (nodePath) {
 };
 
 
-FileSystem.prototype.buildNode = function (node, callback) {
+/**
+ * Builds the given node's children list
+ *
+ * @param {Object}   node     The 'folder' node to build
+ * @param {Function} callback
+ */
+FileSystem.prototype.buildNode = function (node, done) {
   var self = this;
 
   fs.readdir(this.absolutePath(node.path), function (err, list) {
-    if (err) return callback(err);
+    if (err) return done(err);
 
     async.map(list, function (filename, next) {
       var childNodePath = path.join(node.path, filename);
 
       fs.stat(self.absolutePath(childNodePath), function (err, stat) {
-        if (err) return mapCallback(err);
+        if (err) return next(err);
 
         if (stat.isDirectory()) {
           // It's a directory so create it and build its children
@@ -72,25 +78,29 @@ FileSystem.prototype.buildNode = function (node, callback) {
           });
         } else {
           // It's a file so create it
-          next(null, {
+          next(null, Immutable.Map({
             name : filename,
             path : childNodePath,
             type : "file"
-          });
+          }));
         }
       });
     }, function (err, children) {
-      // We're done with the mapping so add the children to the node
-      node.children = children.sort(function (a, b) {
-        if (a.type == b.type) return a.name.localeCompare(b.name);
-        if (a.type == "folder") return -1;
-        return 1;
-      });
-      callback(null, node);
+      if (err) return done(err);
+
+      // We're done with the mapping so sort the children and add them to the node
+
+      node.children = Immutable.List(children.sort(nodeCompare));
+
+      done(null, Immutable.Map(node));
     });
   });
 };
 
+function nodeCompare(a, b) {
+  if (a.get("type") == b.get("type")) return a.get("name").localeCompare(b.get("name"));
+  return a.get("type") == "folder" ? -1 : 1;
+};
 
 FileSystem.prototype.startWatching = function () {
   // Create a debounced event emitter. This prevents emitting
@@ -107,12 +117,11 @@ FileSystem.prototype.startWatching = function () {
   }).on("all", function (event, nodePath) {
     console.log("WATCHER", event, nodePath);
     switch (event) {
-      // case "addDir":
-      // case "add":
-      //   this.addNode(nodePath), function (err) {
-      //     if (!err) emitChange();
-      //   }
-      //   break;
+      case "addDir":
+        this.addFolderNode(nodePath, function (err) {
+          if (!err) emitChange();
+        });
+        break;
       case "unlink":
       case "unlinkDir":
         this.removeNode(nodePath, function (err) {
@@ -184,3 +193,38 @@ FileSystem.prototype.removeNode = function (nodePath, cb) {
 };
 
 
+FileSystem.prototype.addFolderNode = function (nodePath, done) {
+  var self = this;
+
+  async.reduce(nodePath.split(path.sep), [], function (address, nodeName, next) {
+    var currentNode = self.tree.getIn(address);
+
+    if (currentNode.get("children").every(function (node, index) {
+      if (node.get("name") == nodeName) {
+        next(null, address.concat("children", index));
+        // Returning false here breaks out of the loop
+        return false;
+      }
+
+      return true;
+    })) {
+      var index;
+      // New node
+      self.tree = self.tree.updateIn(address.concat("children"), function (list) {
+        var folderNode = Immutable.Map({
+          name : nodeName,
+          path : path.join(currentNode.get("path"), nodeName),
+          type : "folder",
+          children : Immutable.List([])
+        });
+        var l = list.push(folderNode).sort(nodeCompare)
+        index = l.indexOf(folderNode);
+        return l;
+      });
+      next(null, address.concat("children", index));
+    }
+  }, function (err, address) {
+    console.log(address);
+    done(null);
+  });
+};
