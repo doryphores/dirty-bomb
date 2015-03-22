@@ -2,6 +2,7 @@ var fs           = require("fs-extra"),
     path         = require("path"),
     chokidar     = require("chokidar"),
     _            = require("underscore"),
+    async        = require("async"),
     Immutable    = require("immutable"),
     util         = require("util"),
     EventEmitter = require("events").EventEmitter;
@@ -11,14 +12,12 @@ var fs           = require("fs-extra"),
   FileSystem object
 \*=============================================*/
 
+
 var FileSystem = module.exports = function (rootPath) {
   this.rootPath = rootPath;
 };
 
 util.inherits(FileSystem, EventEmitter);
-
-
-
 
 
 /*=============================================*\
@@ -27,46 +26,119 @@ util.inherits(FileSystem, EventEmitter);
 
 
 FileSystem.prototype.init = function () {
-  // Root node
-  var root = {
-    name  : "root",
-    path  : this.rootPath,
-    depth : 0
-  };
-
   // Build content tree
-  root.children = nodeList(this.rootPath, root);
+  this.buildNode({
+    name : "root",
+    path : "",
+    type : "folder"
+  }, function (err, root) {
+    if (err) {
+      // TODO: handle error
+    } else {
+      // Make tree immutable
+      this.tree = root;
+      this.startWatching();
+      this.emit("ready");
+    }
+  }.bind(this));
+};
 
-  this.tree = Immutable.fromJS(root);
 
-  // Debounced event emitter this prevents emitting
-  // multiple change events close together
+FileSystem.prototype.absolutePath = function (nodePath) {
+  return path.join(this.rootPath, nodePath);
+};
+
+
+/**
+ * Builds the given node's children list
+ *
+ * @param {Object}   node     The 'folder' node to build
+ * @param {Function} callback
+ */
+FileSystem.prototype.buildNode = function (node, done) {
+  var self = this;
+
+  fs.readdir(this.absolutePath(node.path), function (err, list) {
+    if (err) return done(err);
+
+    async.map(list, function (filename, next) {
+      var childNodePath = path.join(node.path, filename);
+
+      fs.stat(self.absolutePath(childNodePath), function (err, stat) {
+        if (err) return next(err);
+
+        if (stat.isDirectory()) {
+          // It's a directory so create it and build its children
+          self.buildNode({
+            name : filename,
+            path : childNodePath,
+            type : "folder"
+          }, function (err, folderNode) {
+            next(null, folderNode);
+          });
+        } else {
+          // It's a file so create it
+          next(null, Immutable.Map({
+            name : filename,
+            path : childNodePath,
+            type : "file"
+          }));
+        }
+      });
+    }, function (err, children) {
+      if (err) return done(err);
+
+      // We're done with the mapping so sort the children and add them to the node
+
+      node.children = Immutable.List(children.sort(nodeCompare));
+
+      done(null, Immutable.Map(node));
+    });
+  });
+};
+
+function nodeCompare(a, b) {
+  if (a.get("type") == b.get("type")) return a.get("name").localeCompare(b.get("name"));
+  return a.get("type") == "folder" ? -1 : 1;
+};
+
+FileSystem.prototype.startWatching = function () {
+  // Create a debounced event emitter. This prevents emitting
+  // too many change events close to eachother.
   var emitChange = _.debounce(function () {
     this.emit("change", this.tree);
   }.bind(this), 100);
 
   // Watch the file system for changes and update the tree accordingly
-  chokidar.watch(this.rootPath, {
+  chokidar.watch(".", {
     persistent    : true,
-    ignoreInitial : true
+    ignoreInitial : true,
+    cwd           : this.rootPath
   }).on("all", function (event, nodePath) {
     console.log("WATCHER", event, nodePath);
     switch (event) {
+      case "add":
+        this.addFileNode(nodePath, function (err) {
+          if (!err) emitChange();
+        });
+        break;
+      case "addDir":
+        this.addFolderNode(nodePath, function (err) {
+          if (!err) emitChange();
+        });
+        break;
       case "unlink":
       case "unlinkDir":
-        this.removeNode(nodePath, function (err, tree) {
+        this.removeNode(nodePath, function (err) {
           if (!err) emitChange();
         });
         break;
     }
   }.bind(this));
-  
-  this.emit("ready");
-};
-
+}
 
 FileSystem.prototype.readFile = function (nodePath, cb) {
-  fs.readFile(nodePath, {
+  fs.readFile(this.absolutePath(nodePath), {
     encoding: "utf-8"
   }, function (err, data) {
     if (!err) cb(data);
@@ -80,33 +152,27 @@ FileSystem.prototype.readFile = function (nodePath, cb) {
  *
  * Callback arguments:
  * 	@param {Error} An error object when path is not found (null otherwise)
- * 	@param {Array} An index array for finding the node in the tree
+ * 	@param {Array} An address array for finding the node in the tree
  *
  * @param {string}   nodePath The absolute path of the node to find
  * @param {Function} cb       Callback function
  */
-FileSystem.prototype.findNode = function (nodePath, cb) {
-  var currentNode = this.tree;
-  var pathComponents = path.relative(contentDir, nodePath).split(path.sep);
-  
-  // Compute a list of tree indices for the given path
-  var indices = _.compact(pathComponents.map(function (nodeName) {
-    var children = currentNode.get("children");
-    for (var i = 0; i < children.size; i++) {
-      if (children.getIn([i, "name"]) == nodeName) {
-        currentNode = children.get(i);
-        return ["children", i];
+FileSystem.prototype.findNode = function (nodePath, done) {
+  async.reduce(nodePath.split(path.sep), [], function (address, nodeName, next) {
+    if (this.tree.getIn(address.concat("children")).every(function (node, index) {
+      if (node.get("name") == nodeName) {
+        next(null, address.concat("children", index));
+        // Returning false here breaks out of the loop
+        return false;
       }
+
+      // Returning true means "no match"
+      return true;
+    })) {
+      // We get here when non of the child nodes match the node name
+      next(new Error("Path not found: " + nodeName));
     }
-    return null;
-  }));
-
-  // Return an error when the index list does not match the given path
-  if (indices.length != pathComponents.length) {
-    return cb(new Error("Path not found: " + nodePath));
-  }
-
-  cb(null, _.flatten(indices));
+  }.bind(this), done);
 };
 
 
@@ -120,57 +186,70 @@ FileSystem.prototype.findNode = function (nodePath, cb) {
  * @param {Function} cb       Callback function
  */
 FileSystem.prototype.removeNode = function (nodePath, cb) {
-  this.findNode(nodePath, function (err, indices) {
+  this.findNode(nodePath, function (err, address) {
     if (err) return cb(err);
 
-    var nodeIndex = indices.pop();
-    
-    this.tree = this.tree.updateIn(indices, function (list) {
-      return list.splice(nodeIndex, 1);
+    this.tree = this.tree.updateIn(_.initial(address), function (list) {
+      return list.delete(_.last(address));
     });
-    
+
     cb(null);
   }.bind(this));
 };
 
 
+FileSystem.prototype.addFileNode = function (nodePath, done) {
+  this.addFolderNode(path.dirname(nodePath), function (err, address) {
+    if (err) return done(err);
+
+    this.tree = this.tree.updateIn(address.concat("children"), function (children) {
+      return children.push(Immutable.Map({
+        name : path.basename(nodePath),
+        path : nodePath,
+        type : "file"
+      })).sort(nodeCompare);
+    });
+
+    done();
+  }.bind(this));
+};
 
 
+FileSystem.prototype.addFolderNode = function (nodePath, done) {
+  var self = this;
 
-/*=============================================*\
-  Private methods
-\*=============================================*/
+  if (nodePath === ".") {
+    return done(null, []);
+  }
 
+  async.reduce(nodePath.split(path.sep), [], function (address, nodeName, next) {
+    var currentNode = self.tree.getIn(address);
 
-/**
- * Builds a node tree from a path to the file system
- *
- * @param {string} rootPath Absolute path to a folder on the file system
- * @param {object} parent   Parent node used to calculate depth
- */
-function nodeList(rootPath, parent) {
-  return fs.readdirSync(rootPath).map(function (filename) {
-    var fullPath = path.join(rootPath, filename);
-    var s = fs.statSync(fullPath);
+    if (currentNode.get("children").every(function (node, index) {
+      if (node.get("name") == nodeName) {
+        next(null, address.concat("children", index));
+        // Returning false here breaks out of the loop
+        return false;
+      }
 
-    var node = {
-      name  : filename,
-      path  : fullPath,
-      depth : parent.depth + 1
-    };
-
-    if (s.isDirectory()) {
-      node.type = "folder";
-      node.children = nodeList(fullPath, node).sort(function (a, b) {
-        // This sorts the nodes by type and name
-        if (a.type == b.type) return a.name.localeCompare(b.name);
-        if (a.type == "file") return 1;
-        return -1;
+      return true;
+    })) {
+      var index;
+      // New node
+      self.tree = self.tree.updateIn(address.concat("children"), function (list) {
+        var folderNode = Immutable.Map({
+          name : nodeName,
+          path : path.join(currentNode.get("path"), nodeName),
+          type : "folder",
+          children : Immutable.List([])
+        });
+        var l = list.push(folderNode).sort(nodeCompare)
+        index = l.indexOf(folderNode);
+        return l;
       });
-    } else {
-      node.type = "file";
+      next(null, address.concat("children", index));
     }
-
-    return node;
+  }, function (err, address) {
+    done(null, address);
   });
-}
+};

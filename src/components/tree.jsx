@@ -47,7 +47,7 @@ Tree.NodeList = React.createClass({
 
   render: function () {
     var selectedNode = this.props.selectedNode;
-    
+
     return (
       <ul className="tree__node-list">
         {this.props.nodes.map(function (node) {
@@ -91,11 +91,11 @@ Tree.FileNode = React.createClass({
   getInitialState: function () {
     return {selected: false};
   },
-  
+
   shouldComponentUpdate: function(nextProps, nextState) {
     return this.props.node !== nextProps.node || this.state.selected != nextState.selected;
   },
-  
+
   handleClick: function () {
     if (this.state.selected) return;
 
@@ -105,7 +105,7 @@ Tree.FileNode = React.createClass({
     EventListener.emit("node.selected", this.props.node.get("path"));
     
     EventListener.once("node.selected", function (nodePath) {
-      if (this.state.selected && nodePath != this.props.node.get("path")) {
+      if (this.isMounted() && this.state.selected && nodePath != this.props.node.get("path")) {
         this.setState({selected: false});
       }
     }.bind(this));
@@ -116,7 +116,7 @@ Tree.FileNode = React.createClass({
   handleDoubleClick: function () {
     EventListener.emit("file.open", this.props.node.get("path"));
   },
-  
+
   nodeClasses: function () {
     return "tree__node" + (this.state.selected ? " tree__node--is-selected" : "");
   },
