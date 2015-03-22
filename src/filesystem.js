@@ -37,8 +37,9 @@ FileSystem.prototype.init = function () {
     } else {
       // Make tree immutable
       this.tree = root;
-      this.startWatching();
-      this.emit("ready");
+      this.startWatching().on("ready", function () {
+        this.emit("ready");
+      }.bind(this));
     }
   }.bind(this));
 };
@@ -104,18 +105,17 @@ function nodeCompare(a, b) {
 
 FileSystem.prototype.startWatching = function () {
   // Create a debounced event emitter. This prevents emitting
-  // too many change events close to eachother.
+  // too many change events close to each other.
   var emitChange = _.debounce(function () {
     this.emit("change", this.tree);
   }.bind(this), 100);
 
   // Watch the file system for changes and update the tree accordingly
-  chokidar.watch(".", {
+  return chokidar.watch(".", {
     persistent    : true,
     ignoreInitial : true,
     cwd           : this.rootPath
   }).on("all", function (event, nodePath) {
-    console.log("WATCHER", event, nodePath);
     switch (event) {
       case "add":
         this.addFileNode(nodePath, function (err) {
