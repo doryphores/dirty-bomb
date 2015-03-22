@@ -1,6 +1,5 @@
 var remote = require("remote");
 var app    = remote.require("app");
-var ipc    = require("ipc");
 var React  = require("react");
 
 module.exports = React.createClass({
@@ -9,7 +8,7 @@ module.exports = React.createClass({
   },
 
   reload: function () {
-    ipc.send("dev.reload");
+    window.location.reload();
   },
   
   render: function () {

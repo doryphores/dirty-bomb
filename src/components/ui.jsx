@@ -21,7 +21,7 @@ fileSystem.on("ready", function () {
       <Tree fileSystem={fileSystem} />
       <Editor fileSystem={fileSystem} />
     </div>,
-    document.getElementById("js-app")
+    document.querySelector("body")
   );
 });
 
