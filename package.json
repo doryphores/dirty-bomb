@@ -22,7 +22,8 @@
     "react": "*",
     "immutable": "*",
     "showdown": "*",
-    "codemirror": "*"
+    "codemirror": "*",
+    "stylus": "*"
   },
   "devDependencies": {
     "atom-shell": "0.21.2"
