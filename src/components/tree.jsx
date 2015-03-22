@@ -68,17 +68,22 @@ Tree.NodeList = React.createClass({
 
 
 Tree.FolderNode = React.createClass({
+  getInitialState: function () {
+    return { open: false };
+  },
+  
   shouldComponentUpdate: function(nextProps, nextState) {
-    return this.props.node !== nextProps.node;
+    console.log(this.state.open != nextState.open || this.props.node !== nextProps.node);
+    return this.state.open != nextState.open || this.props.node !== nextProps.node;
   },
 
-  handleClick: function (event) {
-    event.currentTarget.parentNode.classList.toggle("tree__node--is-open");
+  handleClick: function () {
+    this.setState({open: !this.state.open});
   },
 
   render: function () {
     return (
-      <li className="tree__node">
+      <li className={"tree__node" + (this.state.open ? " tree__node--is-open" : "")}>
         <span className="tree__label tree__label--is-folder" onClick={this.handleClick}>{this.props.node.get("name")}</span>
         <Tree.NodeList key="children" nodes={this.props.node.get("children")} />
       </li>
