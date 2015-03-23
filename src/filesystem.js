@@ -26,6 +26,7 @@ util.inherits(FileSystem, EventEmitter);
 
 
 FileSystem.prototype.init = function () {
+  console.time("Initialise content tree");
   // Build content tree
   this.buildNode({
     name : "root",
@@ -38,6 +39,7 @@ FileSystem.prototype.init = function () {
       // Make tree immutable
       this.tree = root;
       this.startWatching().on("ready", function () {
+        console.timeEnd("Initialise content tree");
         this.emit("ready");
       }.bind(this));
     }

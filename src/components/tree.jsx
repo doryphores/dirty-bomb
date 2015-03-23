@@ -71,9 +71,8 @@ Tree.FolderNode = React.createClass({
   getInitialState: function () {
     return { open: false };
   },
-  
+
   shouldComponentUpdate: function(nextProps, nextState) {
-    console.log(this.state.open != nextState.open || this.props.node !== nextProps.node);
     return this.state.open != nextState.open || this.props.node !== nextProps.node;
   },
 
@@ -108,7 +107,7 @@ Tree.FileNode = React.createClass({
     // and listen to any future broadcasts. This ensures a single node
     // is selected at any time.
     EventListener.emit("node.selected", this.props.node.get("path"));
-    
+
     EventListener.once("node.selected", function (nodePath) {
       if (this.isMounted() && this.state.selected && nodePath != this.props.node.get("path")) {
         this.setState({selected: false});
@@ -117,7 +116,7 @@ Tree.FileNode = React.createClass({
 
     this.setState({selected: true});
   },
-  
+
   handleDoubleClick: function () {
     EventListener.emit("file.open", this.props.node.get("path"));
   },
