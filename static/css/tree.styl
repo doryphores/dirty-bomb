@@ -1,0 +1,93 @@
+.tree {
+  position absolute
+  top 0
+  left 0
+  bottom 0
+  width 200px
+  padding 5px
+  overflow auto
+  background #a0a0a0
+  -webkit-user-select none
+}
+
+
+// Tree node lists
+
+.tree__node-list {
+  list-style none
+  display none
+  font-size 14px
+  line-height 24px
+
+  .tree > & {
+    display block
+  }
+
+  .tree__node--is-open > & {
+    display block
+  }
+}
+
+
+// Tree nodes
+
+.tree__node {
+  .tree__node {
+    padding-left 20px
+  }
+
+  &:before {
+    content ""
+    position absolute
+    background #ccc
+    left 0
+    right 0
+    height 24px
+    opacity 0
+    transition opacity .1s
+  }
+}
+
+.tree__node--is-selected:before {
+  opacity 1
+}
+
+
+// Tree labels
+
+.tree__label {
+  position relative
+  display block
+  padding-right 5px
+  cursor pointer
+  white-space nowrap
+  transition color .1s
+
+  &:hover {
+    color #000
+  }
+
+  &:before {
+    content ""
+    display inline-block
+    width 20px
+    height 16px
+    margin-right 4px
+    vertical-align middle
+    background-repeat no-repeat
+    background-position center center
+    background-size auto 100%
+  }
+
+  .tree__node--is-folder > & {
+    font-weight bold
+  }
+}
+
+.tree__label--is-folder:before {
+  background-image url(icons/folder.svg)
+}
+
+.tree__label--is-file:before {
+  background-image url(icons/file.svg)
+}
