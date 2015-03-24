@@ -1,15 +1,4 @@
-.editor
-  position absolute
-  left 200px
-  top 30px
-  right 0
-  bottom 0
-
 textarea
-  position absolute
-  top 0
-  left 0
-  bottom 0
   width 50%
   padding 20px
   border none
@@ -19,19 +8,21 @@ textarea
   font-weight 600
   outline none
 
+.cm-container
+  position relative
+  width 50%
+
 .CodeMirror
   position absolute
   top 0
   left 0
-  bottom 0
-  width 50%
-  height 100%
-
-.preview
-  position absolute
-  top 0
   right 0
   bottom 0
+  height auto
+  padding 10px
+  font 14px/18px Source Code Pro
+
+.preview
   width 50%
   padding 20px
   overflow auto

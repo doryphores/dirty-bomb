@@ -1,9 +1,9 @@
-var React        = require("react"),
-    FileSystem   = require("../filesystem"),
-    path         = require("path"),
-    Toolbar      = require("./toolbar"),
-    Tree         = require("./tree"),
-    Editor       = require("./editor");
+var React      = require("react"),
+    FileSystem = require("../filesystem"),
+    path       = require("path"),
+    Toolbar    = require("./toolbar"),
+    Tree       = require("./tree"),
+    Editor     = require("./editor");
 
 // Content root
 // TODO: move this to some app configuration object
@@ -16,10 +16,12 @@ var fileSystem = new FileSystem(contentDir);
 
 fileSystem.on("ready", function () {
   React.render(
-    <div>
-      <Toolbar />
+    <div className="panel-container horizontal">
       <Tree fileSystem={fileSystem} />
-      <Editor fileSystem={fileSystem} />
+      <div className="panel-container vertical">
+        <Toolbar />
+        <Editor fileSystem={fileSystem} />
+      </div>
     </div>,
     document.querySelector("body")
   );

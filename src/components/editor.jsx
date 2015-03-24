@@ -81,8 +81,10 @@ var Editor = module.exports = React.createClass({
   render: function () {
     var previewHTML = converter.makeHtml(this.state.markdown);
     return (
-      <div className="editor">
-        <textarea ref="textarea" value={this.state.markdown} onChange={this.handleChange} />
+      <div className="editor panel-container horizontal">
+        <div className="cm-container">
+          <textarea ref="textarea" value={this.state.markdown} onChange={this.handleChange} />
+        </div>
         <div className="preview" dangerouslySetInnerHTML={{__html: previewHTML}} />
       </div>
     );
