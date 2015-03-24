@@ -47,8 +47,9 @@ var Editor = module.exports = React.createClass({
 
   componentDidMount: function () {
     this.editor = CodeMirror.fromTextArea(this.refs.textarea.getDOMNode(), {
-      mode  : "markdown",
-      theme : "base16-dark"
+      mode         : "markdown",
+      theme        : "mbo",
+      lineWrapping : true
     });
 
     this.editor.on("change", function () {
