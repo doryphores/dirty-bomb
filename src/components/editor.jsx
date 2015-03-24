@@ -8,8 +8,14 @@ require("codemirror/mode/markdown/markdown");
 
 var imageRoot = path.resolve(__dirname, "../../repo/public/media");
 
-var imageFix = function (converter) {
+var markdownExtensions = function (converter) {
   return [
+    {
+      type   : "lang",
+      filter : function (md) {
+        return md.replace(/---[\s\S]*---/, "");
+      }
+    },
     {
       type    : "lang",
       regex   : "/media",
@@ -18,18 +24,7 @@ var imageFix = function (converter) {
   ];
 };
 
-var stripFrontMatter = function (converter) {
-  return [
-    {
-      type   : "lang",
-      filter : function (md) {
-        return md.replace(/---[\s\S]*---/, "");
-      }
-    }
-  ]
-};
-
-var converter = new Showdown.converter({extensions: [imageFix, stripFrontMatter]});
+var converter = new Showdown.converter({extensions: [markdownExtensions]});
 
 
 /*=============================================*\
