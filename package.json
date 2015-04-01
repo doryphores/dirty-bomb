@@ -5,6 +5,10 @@
   "author": {
     "name": "Martin Laine"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/doryphores/dirty-bomb.git"
+  },
   "main": "main.js",
   "scripts": {
     "start": "./node_modules/.bin/atom-shell ."
