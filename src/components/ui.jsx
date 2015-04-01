@@ -1,5 +1,6 @@
 var React      = require("react"),
-    FileSystem = require("../filesystem"),
+    // FileSystem = require("../filesystem"),
+    FileTree   = require("fs-tree"),
     path       = require("path"),
     Toolbar    = require("./toolbar"),
     Tree       = require("./tree"),
@@ -12,7 +13,7 @@ var contentDir = path.resolve(__dirname, "../../repo/content");
 
 // Initialise file system and render UI when ready
 
-var fileSystem = new FileSystem(contentDir);
+var fileSystem = window.fileSystem = new FileTree(contentDir);
 
 fileSystem.on("ready", function () {
   React.render(
@@ -27,4 +28,4 @@ fileSystem.on("ready", function () {
   );
 });
 
-fileSystem.init();
+fileSystem.build();

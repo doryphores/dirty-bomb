@@ -10,20 +10,12 @@
     "start": "./node_modules/.bin/atom-shell ."
   },
   "dependencies": {
-    "underscore": "*",
-    "async": "*",
-    "promisify-node": "*",
-    "fs-extra": "*",
-    "chokidar": "*",
-    "nodegit": "*",
-    "github": "*",
-    "node-forge": "*",
+    "codemirror": "*",
     "node-jsx": "*",
     "react": "*",
-    "immutable": "*",
     "showdown": "*",
-    "codemirror": "*",
-    "stylus": "*"
+    "stylus": "*",
+    "fs-tree": "doryphores/fs-tree"
   },
   "devDependencies": {
     "atom-shell": "0.21.2"

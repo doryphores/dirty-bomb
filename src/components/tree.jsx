@@ -15,9 +15,19 @@ var Tree = module.exports = React.createClass({
   },
 
   componentDidMount: function () {
+    this.props.fileSystem.expand("");
+
     // Listen to file system changes
     this.props.fileSystem.on("change", function (tree) {
       this.setState({root: tree});
+    }.bind(this));
+
+    EventListener.on("node.expand", function (nodePath) {
+      this.props.fileSystem.expand(nodePath);
+    }.bind(this));
+
+    EventListener.on("node.collapse", function (nodePath) {
+      this.props.fileSystem.collapse(nodePath);
     }.bind(this));
   },
 
@@ -58,6 +68,11 @@ Tree.Node = React.createClass({
   },
 
   handleClick: function () {
+    if (this.isFolder()) {
+      this.setState({open: !this.state.open}, function () {
+        EventListener.emit("node." + (this.state.open ? "expand" : "collapse"), this.props.node.get("path"));
+      });
+    }
 
     if (this.state.selected) return;
 
