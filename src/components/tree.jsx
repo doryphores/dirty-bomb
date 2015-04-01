@@ -8,29 +8,20 @@ var React         = require("react"),
 
 var Tree = module.exports = React.createClass({
   getInitialState: function () {
-    return {
-      root         : this.props.fileSystem.tree,
-      selectedNode : null
-    };
+    return { rootNode: this.props.fileSystem.tree };
   },
 
   componentDidMount: function () {
     this.props.fileSystem.expand("");
 
     // Listen to file system changes
-    this.props.fileSystem.on("change", function (tree) {
-      this.setState({root: tree});
-    }.bind(this));
-
-    EventListener.on("node.expand", function (nodePath) {
-      this.props.fileSystem.expand(nodePath);
-    }.bind(this));
-
-    EventListener.on("node.collapse", function (nodePath) {
-      this.props.fileSystem.collapse(nodePath);
-    }.bind(this));
+    this.props.fileSystem.on("change", this._onChange);
   },
-
+  
+  componentWillUnmount: function () {
+    this.props.fileSystem.removeListener("change", this._onChange);
+  },
+  
   componentWillUpdate: function () {
     console.time("Tree:render");
   },
@@ -44,11 +35,19 @@ var Tree = module.exports = React.createClass({
       <div className="tree">
         <div className="tree__scroller">
           <ul className="tree__node-list tree__node-list--is-root">
-            <Tree.Node key="root" node={this.state.root} expanded={true} />
+            <Tree.Node
+              key="root"
+              node={this.state.rootNode}
+              fs={this.props.fileSystem}
+              expanded={true} />
           </ul>
         </div>
       </div>
     );
+  },
+  
+  _onChange: function () {
+    this.setState({rootNode: this.props.fileSystem.tree});
   }
 });
 
@@ -67,11 +66,50 @@ Tree.Node = React.createClass({
       || this.state.open != nextState.open;
   },
 
-  handleClick: function () {
-    if (this.isFolder()) {
+  render: function () {
+    if (this._isFile()) {
+      return (
+        <li className={this._nodeClasses()}>
+          <span
+            className="tree__label tree__label--is-file"
+            onClick={this._handleClick}
+            onDoubleClick={this._handleDoubleClick}>
+            {this.props.node.get("name")}
+          </span>
+        </li>
+      );
+    } else {
+      return (
+        <li className={this._nodeClasses()}>
+          <span
+            className="tree__label tree__label--is-folder"
+            onClick={this._handleClick}>
+            {this.props.node.get("name")}
+          </span>
+          <ul className="tree__node-list">
+            {this.props.node.get("children").map(function (node) {
+              return (
+                <Tree.Node
+                  key={node.get("name")}
+                  node={node}
+                  fs={this.props.fs} />
+              );
+            }.bind(this))}
+          </ul>
+        </li>
+      );
+    }
+  },
+
+  _handleClick: function () {
+    if (this._isFolder()) {
       this.setState({open: !this.state.open}, function () {
-        EventListener.emit("node." + (this.state.open ? "expand" : "collapse"), this.props.node.get("path"));
-      });
+        if (this.state.open) {
+          this.props.fs.expand(this.props.node.get("path"));
+        } else {
+          this.props.fs.collapse(this.props.node.get("path"));
+        }
+      }.bind(this));
     }
 
     if (this.state.selected) return;
@@ -90,45 +128,24 @@ Tree.Node = React.createClass({
     this.setState({selected: true});
   },
 
-  handleDoubleClick: function () {
-    if (this.isFile()) {
+  _handleDoubleClick: function () {
+    if (this._isFile()) {
       EventListener.emit("file.open", this.props.node.get("path"));
     }
   },
 
-  render: function () {
-    if (this.isFile()) {
-      return (
-        <li className={this.nodeClasses()}>
-          <span className="tree__label tree__label--is-file" onClick={this.handleClick} onDoubleClick={this.handleDoubleClick}>{this.props.node.get("name")}</span>
-        </li>
-      );
-    } else {
-      return (
-        <li className={this.nodeClasses()}>
-          <span className="tree__label tree__label--is-folder" onClick={this.handleClick}>{this.props.node.get("name")}</span>
-          <ul className="tree__node-list">
-            {this.props.node.get("children").map(function (node) {
-              return (<Tree.Node key={node.get("name")} node={node} />);
-            })}
-          </ul>
-        </li>
-      );
-    }
-  },
-
-  nodeClasses: function () {
+  _nodeClasses: function () {
     var classNames = ["tree__node"];
     if (this.state.selected) classNames.push("tree__node--is-selected");
     if (this.state.open) classNames.push("tree__node--is-open");
     return classNames.join(" ");
   },
 
-  isFile: function () {
+  _isFile: function () {
     return this.props.node.get("type") === "file";
   },
 
-  isFolder: function () {
+  _isFolder: function () {
     return this.props.node.get("type") === "folder";
   }
 });
