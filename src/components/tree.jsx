@@ -6,7 +6,6 @@ var React         = require("react"),
   Component definitions
 \*=============================================*/
 
-
 var Tree = module.exports = React.createClass({
   getInitialState: function () {
     return {
@@ -33,74 +32,31 @@ var Tree = module.exports = React.createClass({
   render: function () {
     return (
       <div className="tree">
-        <Tree.NodeList key="root" nodes={this.state.root.get("children")} />
+        <ul className="tree__node-list">
+          <Tree.Node key="root" node={this.state.root} expanded={true} />
+        </ul>
       </div>
     );
   }
 });
 
 
-Tree.NodeList = React.createClass({
-  shouldComponentUpdate: function(nextProps, nextState) {
-    return this.props.nodes !== nextProps.nodes;
-  },
-
-  render: function () {
-    var selectedNode = this.props.selectedNode;
-
-    return (
-      <ul className="tree__node-list">
-        {this.props.nodes.map(function (node) {
-          if (node.get("type") === "folder") {
-            return (
-              <Tree.FolderNode key={node.get("name")} node={node} />
-            );
-          } else {
-            return (
-              <Tree.FileNode key={node.get("name")} node={node} />
-            );
-          }
-        })}
-      </ul>
-    );
-  }
-});
-
-
-Tree.FolderNode = React.createClass({
+Tree.Node = React.createClass({
   getInitialState: function () {
-    return { open: false };
+    return {
+      selected: false,
+      open: this.props.expanded
+    };
   },
 
   shouldComponentUpdate: function(nextProps, nextState) {
-    return this.state.open != nextState.open || this.props.node !== nextProps.node;
+    return this.props.node !== nextProps.node
+      || this.state.selected != nextState.selected
+      || this.state.open != nextState.open;
   },
 
   handleClick: function () {
-    this.setState({open: !this.state.open});
-  },
 
-  render: function () {
-    return (
-      <li className={"tree__node" + (this.state.open ? " tree__node--is-open" : "")}>
-        <span className="tree__label tree__label--is-folder" onClick={this.handleClick}>{this.props.node.get("name")}</span>
-        <Tree.NodeList key="children" nodes={this.props.node.get("children")} />
-      </li>
-    );
-  }
-});
-
-
-Tree.FileNode = React.createClass({
-  getInitialState: function () {
-    return {selected: false};
-  },
-
-  shouldComponentUpdate: function(nextProps, nextState) {
-    return this.props.node !== nextProps.node || this.state.selected != nextState.selected;
-  },
-
-  handleClick: function () {
     if (this.state.selected) return;
 
     // This node is being selected. Broadcast this to any listeners
@@ -118,18 +74,46 @@ Tree.FileNode = React.createClass({
   },
 
   handleDoubleClick: function () {
-    EventListener.emit("file.open", this.props.node.get("path"));
-  },
-
-  nodeClasses: function () {
-    return "tree__node" + (this.state.selected ? " tree__node--is-selected" : "");
+    if (this.isFile()) {
+      EventListener.emit("file.open", this.props.node.get("path"));
+    }
   },
 
   render: function () {
-    return (
-      <li className={this.nodeClasses()} onClick={this.handleClick} onDoubleClick={this.handleDoubleClick}>
-        <span className="tree__label tree__label--is-file">{this.props.node.get("name")}</span>
-      </li>
-    );
+    if (this.isFile()) {
+      return (
+        <li className={this.nodeClasses()}>
+          <span className="tree__label tree__label--is-file" onClick={this.handleClick} onDoubleClick={this.handleDoubleClick}>{this.props.node.get("name")}</span>
+        </li>
+      );
+    } else {
+      return (
+        <li className={this.nodeClasses()}>
+          <span className="tree__label tree__label--is-folder" onClick={this.handleClick}>{this.props.node.get("name")}</span>
+          <ul className="tree__node-list">
+            {this.props.node.get("children").map(function (node) {
+              return (
+                <Tree.Node key={node.get("name")} node={node} />
+              );
+            })}
+          </ul>
+        </li>
+      );
+    }
+  },
+
+  nodeClasses: function () {
+    var classNames = ["tree__node"];
+    if (this.state.selected) classNames.push("tree__node--is-selected");
+    if (this.state.open) classNames.push("tree__node--is-open");
+    return classNames.join(" ");
+  },
+
+  isFile: function () {
+    return this.props.node.get("type") === "file";
+  },
+
+  isFolder: function () {
+    return this.props.node.get("type") === "folder";
   }
 });
