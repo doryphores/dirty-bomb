@@ -32,9 +32,11 @@ var Tree = module.exports = React.createClass({
   render: function () {
     return (
       <div className="tree">
-        <ul className="tree__node-list">
-          <Tree.Node key="root" node={this.state.root} expanded={true} />
-        </ul>
+        <div className="tree__scroller">
+          <ul className="tree__node-list tree__node-list--is-root">
+            <Tree.Node key="root" node={this.state.root} expanded={true} />
+          </ul>
+        </div>
       </div>
     );
   }
@@ -92,9 +94,7 @@ Tree.Node = React.createClass({
           <span className="tree__label tree__label--is-folder" onClick={this.handleClick}>{this.props.node.get("name")}</span>
           <ul className="tree__node-list">
             {this.props.node.get("children").map(function (node) {
-              return (
-                <Tree.Node key={node.get("name")} node={node} />
-              );
+              return (<Tree.Node key={node.get("name")} node={node} />);
             })}
           </ul>
         </li>

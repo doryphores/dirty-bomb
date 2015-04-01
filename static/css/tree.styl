@@ -1,10 +1,17 @@
 .tree {
-  position relative
-  width 200px
-  padding 5px
+  width 300px
+  height 100%
   overflow auto
   background #a0a0a0
   -webkit-user-select none
+}
+
+
+.tree__scroller {
+  position relative
+  padding 10px
+  min-width -webkit-min-content
+  height 100%
 }
 
 
@@ -13,18 +20,17 @@
 .tree__node-list {
   list-style none
   display none
-  font-size 14px
-  line-height 24px
-
-  .tree > & {
-    display block
-  }
+  font-size 12px
+  line-height 26px
 
   .tree__node--is-open > & {
     display block
   }
 }
 
+.tree__node-list--is-root {
+  display block
+}
 
 // Tree nodes
 
@@ -39,9 +45,9 @@
     background #ccc
     left 0
     right 0
-    height 24px
+    height 26px
     opacity 0
-    transition opacity .1s
+    transition opacity .2s
   }
 }
 
@@ -56,20 +62,23 @@
   position relative
   display block
   padding-right 5px
-  cursor pointer
   white-space nowrap
+  cursor default
   transition color .1s
 
+  .tree__node--is-selected > &,
   &:hover {
     color #000
   }
 
   &:before {
     content ""
+    position relative
+    top -2px
     display inline-block
-    width 20px
-    height 16px
-    margin-right 4px
+    width 14px
+    height 14px
+    margin-right 8px
     vertical-align middle
     background-repeat no-repeat
     background-position center center
@@ -87,4 +96,8 @@
 
 .tree__label--is-file:before {
   background-image url(icons/file.svg)
+}
+
+.tree__node-list--is-root > .tree__node > .tree__label--is-folder:before {
+  background-image url(icons/box.svg)
 }
