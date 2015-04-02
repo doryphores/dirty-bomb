@@ -12,6 +12,7 @@
   "scripts": {
     "start": "./node_modules/.bin/atom-shell ."
   },
+  "main": "main.js",
   "dependencies": {
     "codemirror": "*",
     "node-jsx": "*",
