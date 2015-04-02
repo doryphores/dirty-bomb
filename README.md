@@ -1,15 +1,37 @@
-## Requirements:
+# Dirty Bomb
 
-### OSX
+A custom markdown editor built on Atom Shell to manage a website's content.
 
-- nvm `brew install nvm`
+## Node requirements
+
+I recommend using [`nvm`](https://github.com/creationix/nvm) to manage your node environment.
+
+You can install it from brew on OSX:
+
+```bash
+$ brew install nvm
+```
+
+For other platforms, follow [these instructions]((https://github.com/creationix/nvm).
+
+If you have nvm installed, simply run the following after cloning the repository:
+
+```bash
+$ nvm install
+```
 
 ## Install dependencies
 
-The following is required for building native modules for Atom Shell
+Run the following to install Atom Shell and dependencies. The script ensures native modules are built for Atom Shell.
 
+```bash
+$ ./scripts/install
 ```
-$ export npm_config_disturl=https://atom.io/download/atom-shell
-$ export npm_config_target=0.21.2
-$ HOME=~/.atom-shell-gyp npm install
+
+## Starting the app
+
+THe previous step should have installed the Atom Shell binary so you can start the app by running the `npm start` script.
+
+```bash
+$ npm start
 ```
