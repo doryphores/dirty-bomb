@@ -10,7 +10,7 @@
     "url": "https://github.com/doryphores/dirty-bomb.git"
   },
   "scripts": {
-    "start": "./node_modules/.bin/atom-shell ."
+    "start": "atom-shell ."
   },
   "main": "main.js",
   "dependencies": {
