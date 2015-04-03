@@ -14,12 +14,13 @@
   },
   "main": "main.js",
   "dependencies": {
-    "codemirror": "*",
-    "node-jsx": "*",
-    "react": "*",
-    "showdown": "*",
-    "stylus": "*",
-    "fs-tree": "doryphores/fs-tree"
+    "codemirror": "^5.1.0",
+    "flux": "^2.0.1",
+    "fs-tree": "doryphores/fs-tree",
+    "node-jsx": "^0.12.4",
+    "react": "^0.13.1",
+    "showdown": "^0.4.0",
+    "stylus": "^0.50.0"
   },
   "devDependencies": {
     "atom-shell": "0.22.3"
