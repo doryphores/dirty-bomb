@@ -1,8 +1,9 @@
-var React         = require("react"),
-    Showdown      = require("showdown"),
-    path          = require("path"),
-    CodeMirror    = require("codemirror"),
-    EventListener = require("../globalevents");
+var React          = require("react"),
+    Showdown       = require("showdown"),
+    path           = require("path"),
+    CodeMirror     = require("codemirror"),
+    ContentActions = require("../actions/ContentActions"),
+    ContentStore   = require("../stores/ContentStore");
 
 require("codemirror/mode/markdown/markdown");
 
@@ -35,8 +36,7 @@ var converter = new Showdown.converter({extensions: [markdownExtensions]});
 var Editor = module.exports = React.createClass({
   getInitialState: function () {
     return {
-      markdown : "",
-      preview  : ""
+      markdown: ContentStore.getOpenFile()
     };
   },
 
@@ -53,11 +53,7 @@ var Editor = module.exports = React.createClass({
       });
     }.bind(this));
 
-    EventListener.on("file.open", function (nodePath) {
-      this.props.fileSystem.readFile(nodePath, function (fileContent) {
-        this.setState({markdown: fileContent});
-      }.bind(this));
-    }.bind(this));
+    ContentStore.addChangeListener(this._onChange);
   },
 
   shouldComponentUpdate: function(nextProps, nextState) {
@@ -84,5 +80,11 @@ var Editor = module.exports = React.createClass({
         <div className="preview" dangerouslySetInnerHTML={{__html: previewHTML}} />
       </div>
     );
+  },
+
+  _onChange: function () {
+    this.setState({
+      markdown: ContentStore.getOpenFile()
+    });
   }
 });

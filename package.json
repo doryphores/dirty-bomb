@@ -18,6 +18,7 @@
     "flux": "^2.0.1",
     "fs-tree": "doryphores/fs-tree",
     "node-jsx": "^0.12.4",
+    "object-assign": "^2.0.0",
     "react": "^0.13.1",
     "showdown": "^0.4.0",
     "stylus": "^0.50.0"

@@ -1,6 +1,18 @@
-var React         = require("react"),
-    EventListener = require("../globalevents");
+var React          = require("react"),
+    ContentStore   = require("../stores/ContentStore"),
+    ContentActions = require("../actions/ContentActions"),
+    EventEmitter   = require("events").EventEmitter;
 
+
+// This event emitter helps manage a single selected node
+var ActiveNodeManager = new EventEmitter();
+
+
+function getTreeState() {
+  return {
+    rootNode: ContentStore.getTree()
+  };
+}
 
 /*=============================================*\
   Component definitions
@@ -8,26 +20,15 @@ var React         = require("react"),
 
 var Tree = module.exports = React.createClass({
   getInitialState: function () {
-    return { rootNode: this.props.fileSystem.tree };
+    return getTreeState();
   },
 
   componentDidMount: function () {
-    this.props.fileSystem.expand("");
-
-    // Listen to file system changes
-    this.props.fileSystem.on("change", this._onChange);
+    ContentStore.addChangeListener(this._onChange);
   },
-  
+
   componentWillUnmount: function () {
-    this.props.fileSystem.removeListener("change", this._onChange);
-  },
-  
-  componentWillUpdate: function () {
-    console.time("Tree:render");
-  },
-
-  componentDidUpdate: function () {
-    console.timeEnd("Tree:render");
+    ContentStore.removeChangeListener(this._onChange);
   },
 
   render: function () {
@@ -38,16 +39,15 @@ var Tree = module.exports = React.createClass({
             <Tree.Node
               key="root"
               node={this.state.rootNode}
-              fs={this.props.fileSystem}
               expanded={true} />
           </ul>
         </div>
       </div>
     );
   },
-  
+
   _onChange: function () {
-    this.setState({rootNode: this.props.fileSystem.tree});
+    this.setState(getTreeState());
   }
 });
 
@@ -105,9 +105,9 @@ Tree.Node = React.createClass({
     if (this._isFolder()) {
       this.setState({open: !this.state.open}, function () {
         if (this.state.open) {
-          this.props.fs.expand(this.props.node.get("path"));
+          ContentActions.expand(this.props.node.get("path"));
         } else {
-          this.props.fs.collapse(this.props.node.get("path"));
+          ContentActions.collapse(this.props.node.get("path"));
         }
       }.bind(this));
     }
@@ -117,9 +117,8 @@ Tree.Node = React.createClass({
     // This node is being selected. Broadcast this to any listeners
     // and listen to any future broadcasts. This ensures a single node
     // is selected at any time.
-    EventListener.emit("node.selected", this.props.node.get("path"));
-
-    EventListener.once("node.selected", function (nodePath) {
+    ActiveNodeManager.emit("selected", this.props.node.get("path"))
+    ActiveNodeManager.once("selected", function (nodePath) {
       if (this.isMounted() && this.state.selected && nodePath != this.props.node.get("path")) {
         this.setState({selected: false});
       }
@@ -130,7 +129,7 @@ Tree.Node = React.createClass({
 
   _handleDoubleClick: function () {
     if (this._isFile()) {
-      EventListener.emit("file.open", this.props.node.get("path"));
+      ContentActions.open(this.props.node.get("path"));
     }
   },
 
