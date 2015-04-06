@@ -1,14 +1,15 @@
-var AppDispatcher = require("../dispatcher/AppDispatcher");
-var EventEmitter = require("events").EventEmitter;
-var assign = require("object-assign");
-var FileTree = require("fs-tree");
-var fs = require("fs");
+var fs            = require("fs"),
+    assign        = require("object-assign"),
+    EventEmitter  = require("events").EventEmitter,
+    Immutable     = require("immutable"),
+    FileTree      = require("fs-tree"),
+    AppDispatcher = require("../dispatcher/AppDispatcher");
 
 var contentDir = path.resolve(__dirname, "../../repo/content");
 
 var _contentTree = new FileTree(contentDir);
 
-var _openFile = "";
+var _openFiles = Immutable.List();
 
 var CHANGE_EVENT = "change";
 
@@ -17,8 +18,8 @@ var ContentStore = assign({}, EventEmitter.prototype, {
     return _contentTree.tree;
   },
 
-  getOpenFile: function () {
-    return _openFile;
+  getOpenFiles: function () {
+    return _openFiles;
   },
 
   emitChange: function () {
@@ -46,7 +47,11 @@ AppDispatcher.register(function (action) {
       fs.readFile(_contentTree.absolute(action.nodePath), {
         encoding: "utf-8"
       }, function (err, fileContent) {
-        _openFile = fileContent;
+        _openFiles = _openFiles.push({
+          name: path.basename(action.nodePath),
+          path: action.nodePath,
+          content: fileContent
+        });
         ContentStore.emitChange();
       });
     default:

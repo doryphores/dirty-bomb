@@ -1,7 +1,7 @@
-var React   = require("react"),
-    Toolbar = require("./toolbar"),
-    Tree    = require("./tree"),
-    Editor  = require("./editor");
+var React       = require("react"),
+    Toolbar     = require("./toolbar"),
+    Tree        = require("./tree"),
+    EditorPanes = require("./EditorPanes");
 
 exports.render = function () {
   React.render(
@@ -9,7 +9,7 @@ exports.render = function () {
       <Tree />
       <div className="panel-container vertical">
         <Toolbar />
-        <Editor />
+        <EditorPanes />
       </div>
     </div>,
     document.querySelector("body")

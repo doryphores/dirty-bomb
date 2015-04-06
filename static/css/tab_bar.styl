@@ -1,0 +1,37 @@
+.editor-tabs
+  list-style none
+  background black
+  padding-top 4px
+  display -webkit-flex
+  -webkit-flex-direction row
+  font-size 12px
+  line-height 26px
+  -webkit-user-select none
+
+.editor-tabs__item
+  display inline-block
+  -webkit-flex 1
+  width -webkit-min-content
+  max-width 160px
+  min-width 60px
+  padding 0 10px
+  margin-left 2px
+  overflow hidden
+  text-overflow ellipsis
+  white-space nowrap
+  background black
+  border-radius 4px 4px 0 0
+  color white
+  cursor default
+  transition background .2s
+
+  &:hover
+    background #535353
+
+.editor-tabs__item--is-focused
+  -webkit-flex 2
+  background #ccc
+  color black
+
+  &:hover
+    background #ccc
