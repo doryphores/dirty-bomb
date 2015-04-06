@@ -34,7 +34,7 @@ var Tree = module.exports = React.createClass({
 
   render: function () {
     return (
-      <div className="tree">
+      <div className="tree panel">
         <div className="tree__scroller">
           <ul className="tree__node-list tree__node-list--is-root">
             <Tree.Node

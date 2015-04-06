@@ -2,6 +2,8 @@ var React = require("react");
 
 var TabBar = React.createClass({
   render: function() {
+    if (this.props.files.size === 0) return null;
+
     var tabs = this.props.files.map(function (f) {
       return (
         <li
@@ -13,7 +15,7 @@ var TabBar = React.createClass({
         </li>
       );
     }.bind(this));
-    return (<ul className="editor-tabs">{tabs}</ul>);
+    return (<ul className="editor-tabs panel">{tabs}</ul>);
   },
 
   _itemClasses: function (f) {
