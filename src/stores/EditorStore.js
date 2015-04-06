@@ -7,30 +7,120 @@ var fs            = require("fs"),
 
 var contentDir = path.resolve(__dirname, "../../repo/content");
 
-var _store = Immutable.fromJS({
-  files      : [],
-  activeFile : ""
-});
+var _files = Immutable.List();
+var _activeFile = "";
 
-function getActiveFile() {
-  return _store.get("activeFile");
-}
-
-function getFiles() {
-  return _store.get("files");
-}
-
-function getFileIndex(nodePath) {
-  return _store.get("files").findIndex(function (f) {
-    return f.path === nodePath;
+function getFileIndex(filePath) {
+  return _files.findIndex(function (file) {
+    return file.get("path") === filePath;
   });
+}
+
+function openFile(filePath) {
+  var fileIndex = getFileIndex(filePath);
+  if (fileIndex > -1) {
+    setIndexAsActive(fileIndex);
+    EditorStore.emitChange();
+  } else {
+    fs.readFile(path.join(contentDir, filePath), {
+      encoding: "utf-8"
+    }, function (err, fileContent) {
+      if (_activeFile) {
+        _files = _files.setIn([getFileIndex(_activeFile), "active"], false);
+      }
+
+      // Add new file to store and set it as active
+      _files = _files.push(Immutable.Map({
+        name            : path.basename(filePath),
+        path            : filePath,
+        originalContent : fileContent,
+        content         : fileContent,
+        clean           : true,
+        active          : true
+      }));
+
+      _activeFile = filePath;
+
+      EditorStore.emitChange();
+    });
+  }
+}
+
+function setIndexAsActive(fileIndex) {
+  if (_activeFile) {
+    _files = _files.setIn([getFileIndex(_activeFile), "active"], false);
+  }
+  _files = _files.update(fileIndex, function (file) {
+    _activeFile = file.get("path");
+    return file.set("active", true);
+  });
+}
+
+function setAsActive(filePath) {
+  setIndexAsActive(getFileIndex(filePath));
+  EditorStore.emitChange();
+}
+
+function closeFile(filePath) {
+  var fileIndex = getFileIndex(filePath);
+
+  if (fileIndex === -1) return;
+
+  if (filePath === _activeFile) {
+    if (_files.size === 1) {
+      _activeFile = "";
+    } else {
+      setIndexAsActive(fileIndex ? fileIndex - 1 : 1);
+    }
+  }
+
+  _files = _files.remove(fileIndex);
+
+  EditorStore.emitChange();
+}
+
+function updateFile(filePath, content) {
+  _files = _files.update(getFileIndex(filePath), function (file) {
+    return file.set("content", content)
+      .set("clean", file.get("originalContent") === content);
+  });
+
+  EditorStore.emitChange();
+}
+
+function saveFile(filePath, close) {
+  var fileIndex = getFileIndex(filePath);
+  var content = _files.getIn([fileIndex, "content"]);
+
+  fs.writeFile(
+    path.join(contentDir, filePath),
+    content,
+    function (err) {
+      if (err) {
+        console.log(err);
+      } else {
+        if (close) {
+          closeFile(filePath);
+        } else {
+          _files = _files.update(fileIndex, function (file) {
+            return file.set("originalContent", content).set("clean", true);
+          });
+          EditorStore.emitChange();
+        }
+      }
+    }
+  );
 }
 
 var CHANGE_EVENT = "change";
 
 var EditorStore = assign({}, EventEmitter.prototype, {
-  getStore: function () {
-    return _store;
+  getFiles: function () {
+    return _files;
+  },
+
+  getFile: function (filePath) {
+    return _files.get(getFileIndex(filePath));
   },
 
   emitChange: function () {
@@ -49,51 +139,19 @@ var EditorStore = assign({}, EventEmitter.prototype, {
 AppDispatcher.register(function (action) {
   switch(action.actionType) {
     case "editor_open":
-      if (getFileIndex(action.nodePath) > -1) {
-        _store = _store.set("activeFile", action.nodePath);
-        EditorStore.emitChange();
-      } else {
-        fs.readFile(path.join(contentDir, action.nodePath), {
-          encoding: "utf-8"
-        }, function (err, fileContent) {
-          _store = _store.withMutations(function (store) {
-            return store.update("files", function (files) {
-              return files.push({
-                name    : path.basename(action.nodePath),
-                path    : action.nodePath,
-                content : fileContent
-              });
-            }).set("activeFile", action.nodePath);
-          });
-          EditorStore.emitChange();
-        });
-      }
+      openFile(action.nodePath);
+      break;
+    case "editor_change":
+      updateFile(action.nodePath, action.content);
       break;
     case "editor_focus":
-      _store = _store.set("activeFile", action.nodePath);
-      EditorStore.emitChange();
+      setAsActive(action.nodePath);
       break;
     case "editor_close":
-      var activeFile = getActiveFile();
-      var fileIndex = getFileIndex(action.nodePath);
-      var files = getFiles();
-
-      if (fileIndex === -1) return;
-
-      if (files.size < 2) {
-        activeFile = "";
-      } else {
-        activeFile = files.get(fileIndex === 0 ? 1 : fileIndex - 1).path;
-      }
-
-      _store = _store.withMutations(function (store) {
-        return store.update("files", function (files) {
-          return files.filter(function (f) {
-            return f.path !== action.nodePath;
-          });
-        }).set("activeFile", activeFile);
-      });
-      EditorStore.emitChange();
+      closeFile(action.nodePath);
+      break;
+    case "editor_save":
+      saveFile(action.nodePath, action.close);
       break;
     default:
       // no op

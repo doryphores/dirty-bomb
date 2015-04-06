@@ -13,20 +13,6 @@ var ContentActions = {
       actionType: "content_collapse",
       nodePath: nodePath
     });
-  },
-
-  open: function (nodePath) {
-    AppDispatcher.dispatch({
-      actionType: "content_open",
-      nodePath: nodePath
-    });
-  },
-
-  close: function (nodePath) {
-    AppDispatcher.dispatch({
-      actionType: "content_close",
-      nodePath: nodePath
-    });
   }
 };
 

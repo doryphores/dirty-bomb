@@ -15,10 +15,34 @@ var EditorActions = {
     });
   },
 
+  change: function (nodePath, content) {
+    AppDispatcher.dispatch({
+      actionType: "editor_change",
+      nodePath: nodePath,
+      content: content
+    });
+  },
+
   close: function (nodePath) {
     AppDispatcher.dispatch({
       actionType: "editor_close",
       nodePath: nodePath
+    });
+  },
+
+  save: function (nodePath) {
+    AppDispatcher.dispatch({
+      actionType: "editor_save",
+      nodePath: nodePath,
+      close: false
+    });
+  },
+
+  saveAndClose: function (nodePath) {
+    AppDispatcher.dispatch({
+      actionType: "editor_save",
+      nodePath: nodePath,
+      close: true
     });
   }
 };

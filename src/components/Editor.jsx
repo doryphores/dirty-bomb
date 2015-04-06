@@ -1,8 +1,8 @@
-var React          = require("react"),
-    Showdown       = require("showdown"),
-    path           = require("path"),
-    CodeMirror     = require("codemirror"),
-    ContentActions = require("../actions/ContentActions");
+var React         = require("react"),
+    Showdown      = require("showdown"),
+    path          = require("path"),
+    CodeMirror    = require("codemirror"),
+    EditorActions = require("../actions/EditorActions");
 
 require("codemirror/mode/markdown/markdown");
 
@@ -33,47 +33,43 @@ var converter = new Showdown.converter({extensions: [markdownExtensions]});
 
 
 var Editor = module.exports = React.createClass({
-  getInitialState: function () {
-    return {
-      markdown: this.props.file.content
-    };
-  },
-
   componentDidMount: function () {
-    this.editor = CodeMirror.fromTextArea(this.refs.textarea.getDOMNode(), {
+    this.editor = CodeMirror(this.refs.editor.getDOMNode(), {
       mode         : "markdown",
       theme        : "mbo",
-      lineWrapping : true
+      lineWrapping : true,
+      value        : this.props.file.get("content")
     });
 
-    this.editor.on("change", function () {
-      this.setState({
-        markdown: this.editor.getValue()
-      });
-    }.bind(this));
+    this.editor.on("change", this._onChange);
+
+    this.editor.focus();
+  },
+
+  componentWillUnmount: function() {
+    this.editor.off("change", this._onChange);
+  },
+
+  componentDidUpdate: function (prevProps, prevState) {
+    if (!prevProps.file.get("active") && this.props.file.get("active")) {
+      this.editor.focus();
+    }
   },
 
   shouldComponentUpdate: function(nextProps, nextState) {
-    return this.state.markdown !== nextState.markdown ||
-      this.props.focused !== nextProps.focused;
-  },
-
-  componentDidUpdate: function () {
-    this.editor.setValue(this.state.markdown);
-  },
-
-  handleChange: function (event) {
-    this.setState({
-      markdown : event.target.value
-    });
+    return this.props.file !== nextProps.file;
   },
 
   render: function () {
-    var previewHTML = converter.makeHtml(this.state.markdown);
+    var previewHTML = converter.makeHtml(this.props.file.get("content"));
     return (
       <div className={this._classNames()}>
-        <div className="cm-container">
-          <textarea ref="textarea" value={this.state.markdown} onChange={this.handleChange} />
+        <div className="editor panel-container vertical">
+          <div className="editor-toolbar panel">
+            <button onClick={this._onSave}>Save</button>
+            <button onClick={this.props.onClose}>Close</button>
+          </div>
+          <div className="cm-container" ref="editor" />
         </div>
         <div className="preview" dangerouslySetInnerHTML={{__html: previewHTML}} />
       </div>
@@ -81,10 +77,18 @@ var Editor = module.exports = React.createClass({
   },
 
   _classNames: function () {
-    var classes = "editor panel-container horizontal";
-    if (this.props.focused) {
-      classes += " editor--is-focused";
+    var classes = "editor-pane panel-container horizontal";
+    if (this.props.file.get("active")) {
+      classes += " editor-pane--is-focused";
     }
     return classes;
+  },
+
+  _onChange: function () {
+    EditorActions.change(this.props.file.get("path"), this.editor.getValue());
+  },
+
+  _onSave: function () {
+    EditorActions.save(this.props.file.get("path"));
   }
 });
