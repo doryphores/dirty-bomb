@@ -9,6 +9,7 @@
   -webkit-user-select none
 
 .editor-tabs__item
+  position relative
   display inline-block
   -webkit-flex 1
   width -webkit-min-content
@@ -26,7 +27,7 @@
   transition background .2s
 
   &:hover
-    background #535353
+    background #808080
 
 .editor-tabs__item--is-focused
   -webkit-flex 2
@@ -35,3 +36,20 @@
 
   &:hover
     background #ccc
+
+.editor-tabs__close
+  position absolute
+  right 4px
+  top 50%
+  margin-top -5px
+  width 10px
+  height 10px
+  background-image url(icons/x.svg)
+  background-position center center
+  background-size cover
+  transform scale(0)
+  transition transform .1s
+
+  .editor-tabs__item--is-focused &,
+  .editor-tabs__item:hover &
+    transform scale(1)

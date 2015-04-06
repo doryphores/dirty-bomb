@@ -54,6 +54,13 @@ AppDispatcher.register(function (action) {
         });
         ContentStore.emitChange();
       });
+      break;
+    case "content_close":
+      _openFiles = _openFiles.filter(function (f) {
+        return f.path !== action.nodePath;
+      });
+      ContentStore.emitChange();
+      break;
     default:
       // no op
   }

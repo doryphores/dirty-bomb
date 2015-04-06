@@ -7,7 +7,10 @@ var TabBar = React.createClass({
         <li
           key={f.path}
           className={this._itemClasses(f)}
-          onClick={this._onClick.bind(this, f)}>{f.name}</li>
+          onClick={this._onClick.bind(this, f)}>
+            {f.name}
+            <span className="editor-tabs__close close" />
+        </li>
       );
     }.bind(this));
     return (<ul className="editor-tabs">{tabs}</ul>);
@@ -22,7 +25,11 @@ var TabBar = React.createClass({
   },
 
   _onClick: function (f, event) {
-    this.props.onChangeFocus(f.path);
+    if (event.target.classList.contains("close")) {
+      this.props.onClose(f.path);
+    } else {
+      this.props.onChangeFocus(f.path);
+    }
   }
 });
 

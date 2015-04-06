@@ -43,7 +43,8 @@ var EditorPanes = React.createClass({
         <TabBar
           files={this.state.data.get("files")}
           focusedFile={this.state.data.get("activeFile")}
-          onChangeFocus={this._onChangeFocus} />
+          onChangeFocus={this._onChangeFocus}
+          onClose={this._onClose} />
         <div className="editor-panes">
           {editors}
         </div>
@@ -64,6 +65,10 @@ var EditorPanes = React.createClass({
 
   _onChangeFocus: function (filePath) {
     this.setState({data: this.state.data.set("activeFile", filePath)});
+  },
+
+  _onClose: function (filePath) {
+    ContentActions.close(filePath);
   }
 });
 
