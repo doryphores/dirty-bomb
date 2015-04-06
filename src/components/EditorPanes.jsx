@@ -1,19 +1,14 @@
-var React          = require("react"),
-    Editor         = require("./Editor"),
-    TabBar         = require("./TabBar"),
-    ContentStore   = require("../stores/ContentStore"),
-    ContentActions = require("../actions/ContentActions"),
-    Immutable      = require("immutable");
+var React         = require("react"),
+    Editor        = require("./Editor"),
+    TabBar        = require("./TabBar"),
+    EditorStore   = require("../stores/EditorStore"),
+    EditorActions = require("../actions/EditorActions"),
+    Immutable     = require("immutable");
 
 
 var EditorPanes = React.createClass({
   getInitialState: function() {
-    return {
-      data: Immutable.Map({
-        files: ContentStore.getOpenFiles(),
-        activeFile: null
-      })
-    };
+    return { data: EditorStore.getStore() };
   },
 
   shouldComponentUpdate: function(nextProps, nextState) {
@@ -21,11 +16,11 @@ var EditorPanes = React.createClass({
   },
 
   componentDidMount: function() {
-    ContentStore.addChangeListener(this._onChange);
+    EditorStore.addChangeListener(this._onChange);
   },
 
   componentWillUnmout: function() {
-    ContentStore.removeChangeListener(this._onChange);
+    EditorStore.removeChangeListener(this._onChange);
   },
 
   render: function() {
@@ -53,22 +48,15 @@ var EditorPanes = React.createClass({
   },
 
   _onChange: function () {
-    var newData = this.state.data.set("files", ContentStore.getOpenFiles());
-
-    // Set focus on new file
-    if (newData.get("files").size > this.state.data.get("files").size) {
-      newData = newData.set("activeFile", newData.get("files").last().path);
-    }
-
-    this.setState({data: newData});
+    this.setState({data: EditorStore.getStore()});
   },
 
   _onChangeFocus: function (filePath) {
-    this.setState({data: this.state.data.set("activeFile", filePath)});
+    EditorActions.focusOn(filePath);
   },
 
   _onClose: function (filePath) {
-    ContentActions.close(filePath);
+    EditorActions.close(filePath);
   }
 });
 

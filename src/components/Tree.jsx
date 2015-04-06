@@ -1,6 +1,7 @@
 var React          = require("react"),
     ContentStore   = require("../stores/ContentStore"),
     ContentActions = require("../actions/ContentActions"),
+    EditorActions  = require("../actions/EditorActions"),
     EventEmitter   = require("events").EventEmitter;
 
 
@@ -130,7 +131,7 @@ Tree.Node = React.createClass({
 
   _handleDoubleClick: function () {
     if (this._isFile()) {
-      ContentActions.open(this.props.node.get("path"));
+      EditorActions.open(this.props.node.get("path"));
     }
   },
 

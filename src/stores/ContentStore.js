@@ -9,17 +9,11 @@ var contentDir = path.resolve(__dirname, "../../repo/content");
 
 var _contentTree = new FileTree(contentDir);
 
-var _openFiles = Immutable.List();
-
 var CHANGE_EVENT = "change";
 
 var ContentStore = assign({}, EventEmitter.prototype, {
   getTree: function () {
     return _contentTree.tree;
-  },
-
-  getOpenFiles: function () {
-    return _openFiles;
   },
 
   emitChange: function () {
@@ -42,24 +36,6 @@ AppDispatcher.register(function (action) {
       break;
     case "content_collapse":
       _contentTree.collapse(action.nodePath);
-      break;
-    case "content_open":
-      fs.readFile(_contentTree.absolute(action.nodePath), {
-        encoding: "utf-8"
-      }, function (err, fileContent) {
-        _openFiles = _openFiles.push({
-          name: path.basename(action.nodePath),
-          path: action.nodePath,
-          content: fileContent
-        });
-        ContentStore.emitChange();
-      });
-      break;
-    case "content_close":
-      _openFiles = _openFiles.filter(function (f) {
-        return f.path !== action.nodePath;
-      });
-      ContentStore.emitChange();
       break;
     default:
       // no op
