@@ -3,7 +3,7 @@ require("node-jsx").install({extension: ".jsx"});
 var fs     = require("fs"),
     path   = require("path"),
     stylus = require("stylus"),
-    UI     = require("../src/components/ui");
+    UI     = require("../src/components/UI");
 
 window.onload = function () {
   compileCSS(function () {

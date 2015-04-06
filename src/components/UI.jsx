@@ -1,6 +1,6 @@
 var React       = require("react"),
-    Toolbar     = require("./toolbar"),
-    Tree        = require("./tree"),
+    ToolBar     = require("./ToolBar"),
+    Tree        = require("./Tree"),
     EditorPanes = require("./EditorPanes");
 
 exports.render = function () {
@@ -8,7 +8,7 @@ exports.render = function () {
     <div className="panel-container horizontal">
       <Tree />
       <div className="panel-container vertical">
-        <Toolbar />
+        <ToolBar />
         <EditorPanes />
       </div>
     </div>,

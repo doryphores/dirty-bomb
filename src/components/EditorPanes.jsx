@@ -1,5 +1,5 @@
 var React          = require("react"),
-    Editor         = require("./editor"),
+    Editor         = require("./Editor"),
     TabBar         = require("./TabBar"),
     ContentStore   = require("../stores/ContentStore"),
     ContentActions = require("../actions/ContentActions"),
