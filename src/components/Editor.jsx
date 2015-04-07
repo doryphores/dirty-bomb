@@ -54,6 +54,11 @@ var Editor = module.exports = React.createClass({
     if (!prevProps.file.get("active") && this.props.file.get("active")) {
       this.editor.focus();
     }
+
+    // Update editor if the clean content has changed on disk
+    if (this.props.file.get("clean") && this.props.file.get("content") !== this.editor.getValue()) {
+      this.editor.setValue(this.props.file.get("content"));
+    }
   },
 
   shouldComponentUpdate: function(nextProps, nextState) {

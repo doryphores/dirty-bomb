@@ -1,7 +1,8 @@
-var fs            = require("fs"),
+var fs            = require("fs-extra"),
     path          = require("path"),
     assign        = require("object-assign"),
     EventEmitter  = require("events").EventEmitter,
+    PathWatcher   = require("pathwatcher"),
     Immutable     = require("immutable"),
     AppDispatcher = require("../dispatcher/AppDispatcher");
 
@@ -9,6 +10,8 @@ var contentDir = path.resolve(__dirname, "../../repo/content");
 
 var _files = Immutable.List();
 var _activeFile = "";
+var _watchers = {};
+
 
 function getFileIndex(filePath) {
   return _files.findIndex(function (file) {
@@ -31,15 +34,18 @@ function openFile(filePath) {
 
       // Add new file to store and set it as active
       _files = _files.push(Immutable.Map({
-        name            : path.basename(filePath),
-        path            : filePath,
-        originalContent : fileContent,
-        content         : fileContent,
-        clean           : true,
-        active          : true
+        name        : path.basename(filePath),
+        path        : filePath,
+        diskContent : fileContent,
+        content     : fileContent,
+        clean       : true,
+        active      : true
       }));
 
       _activeFile = filePath;
+
+      // Start watching the file
+      addWatcher(filePath);
 
       EditorStore.emitChange();
     });
@@ -76,13 +82,15 @@ function closeFile(filePath) {
 
   _files = _files.remove(fileIndex);
 
+  removeWatcher(filePath);
+
   EditorStore.emitChange();
 }
 
 function updateFile(filePath, content) {
   _files = _files.update(getFileIndex(filePath), function (file) {
     return file.set("content", content)
-      .set("clean", file.get("originalContent") === content);
+      .set("clean", file.get("diskContent") === content);
   });
 
   EditorStore.emitChange();
@@ -92,7 +100,7 @@ function saveFile(filePath, close) {
   var fileIndex = getFileIndex(filePath);
   var content = _files.getIn([fileIndex, "content"]);
 
-  fs.writeFile(
+  fs.outputFile(
     path.join(contentDir, filePath),
     content,
     function (err) {
@@ -103,8 +111,9 @@ function saveFile(filePath, close) {
           closeFile(filePath);
         } else {
           _files = _files.update(fileIndex, function (file) {
-            return file.set("originalContent", content).set("clean", true);
+            return file.set("diskContent", content).set("clean", true);
           });
+          addWatcher(filePath);
           EditorStore.emitChange();
         }
       }
@@ -157,5 +166,80 @@ AppDispatcher.register(function (action) {
       // no op
   }
 });
+
+
+var Watcher = function (filePath) {
+  this.filePath = filePath;
+  this.start();
+};
+
+Watcher.prototype.start = function () {
+  this.watcher = PathWatcher.watch(path.join(contentDir, this.filePath),
+    this.updateFromDisk.bind(this));
+};
+
+Watcher.prototype.stop = function () {
+  this.watcher.close();
+  delete this.watcher;
+};
+
+Watcher.prototype.updateFromDisk = function (event, p) {
+  switch (event) {
+    case "change":
+    case "delete":
+      fs.readFile(path.join(contentDir, this.filePath), {
+        encoding: "utf-8"
+      }, function (err, fileContent) {
+        var fileIndex = getFileIndex(this.filePath);
+        if (err) {
+          // File was deleted
+          if (_files.getIn([fileIndex, "clean"])) {
+            // File is clean so close the tab
+            closeFile(this.filePath);
+          } else {
+            // File was dirty so clear disk content
+            _files = _files.update(fileIndex, function (file) {
+              return file.set("diskContent", "").set("clean", false);
+            });
+
+            // Remove the watcher
+            removeWatcher(this.filePath);
+
+            EditorStore.emitChange();
+          }
+        } else {
+          // File changed on disk so update disk content and update
+          // content if file was clean
+          _files = _files.update(fileIndex, function (file) {
+            return file.set("diskContent", fileContent)
+              .set("content", file.get("clean") ? fileContent : file.get("content"));
+          }).update(fileIndex, function (file) {
+            return file.set("clean", file.get("content") === fileContent);
+          });
+          EditorStore.emitChange();
+        }
+      }.bind(this));
+      break;
+    case "rename":
+      console.log("RENAME");
+      break
+    default:
+      // no op
+  }
+};
+
+function removeWatcher(filePath) {
+  if (_watchers[filePath]) {
+    _watchers[filePath].stop();
+    delete _watchers[filePath];
+  }
+}
+
+function addWatcher(filePath) {
+  if (_watchers[filePath]) {
+    removeWatcher(filePath);
+  }
+  _watchers[filePath] = new Watcher(filePath);
+}
 
 module.exports = EditorStore;
