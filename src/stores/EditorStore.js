@@ -100,6 +100,9 @@ function saveFile(filePath, close) {
   var fileIndex = getFileIndex(filePath);
   var content = _files.getIn([fileIndex, "content"]);
 
+  // Stop the watcher while we save
+  removeWatcher(filePath);
+
   fs.outputFile(
     path.join(contentDir, filePath),
     content,
@@ -113,6 +116,7 @@ function saveFile(filePath, close) {
           _files = _files.update(fileIndex, function (file) {
             return file.set("diskContent", content).set("clean", true);
           });
+          // Restart the watcher
           addWatcher(filePath);
           EditorStore.emitChange();
         }
