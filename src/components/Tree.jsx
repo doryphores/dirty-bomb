@@ -1,4 +1,5 @@
 var React          = require("react"),
+    classNames     = require("classnames"),
     ContentStore   = require("../stores/ContentStore"),
     ContentActions = require("../actions/ContentActions"),
     EditorActions  = require("../actions/EditorActions"),
@@ -136,10 +137,10 @@ Tree.Node = React.createClass({
   },
 
   _nodeClasses: function () {
-    var classNames = ["tree__node"];
-    if (this.state.selected) classNames.push("tree__node--is-selected");
-    if (this.state.open) classNames.push("tree__node--is-open");
-    return classNames.join(" ");
+    return classNames("tree__node", {
+      "tree__node--is-selected" : this.state.selected,
+      "tree__node--is-open"     : this.state.open
+    });
   },
 
   _isFile: function () {

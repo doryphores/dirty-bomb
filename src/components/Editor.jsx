@@ -2,6 +2,7 @@ var React         = require("react"),
     Showdown      = require("showdown"),
     path          = require("path"),
     CodeMirror    = require("codemirror"),
+    classNames    = require("classnames"),
     EditorActions = require("../actions/EditorActions");
 
 require("codemirror/mode/markdown/markdown");
@@ -82,11 +83,9 @@ var Editor = module.exports = React.createClass({
   },
 
   _classNames: function () {
-    var classes = "editor-pane panel-container horizontal";
-    if (this.props.file.get("active")) {
-      classes += " editor-pane--is-focused";
-    }
-    return classes;
+    return classNames("editor-pane panel-container horizontal", {
+      "editor-pane--is-focused": this.props.file.get("active")
+    });
   },
 
   _onChange: function () {
