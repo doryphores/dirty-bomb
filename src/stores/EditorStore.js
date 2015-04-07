@@ -187,49 +187,39 @@ Watcher.prototype.stop = function () {
   delete this.watcher;
 };
 
-Watcher.prototype.updateFromDisk = function (event, p) {
-  switch (event) {
-    case "change":
-    case "delete":
-      fs.readFile(path.join(contentDir, this.filePath), {
-        encoding: "utf-8"
-      }, function (err, fileContent) {
-        var fileIndex = getFileIndex(this.filePath);
-        if (err) {
-          // File was deleted
-          if (_files.getIn([fileIndex, "clean"])) {
-            // File is clean so close the tab
-            closeFile(this.filePath);
-          } else {
-            // File was dirty so clear disk content
-            _files = _files.update(fileIndex, function (file) {
-              return file.set("diskContent", "").set("clean", false);
-            });
+Watcher.prototype.updateFromDisk = function () {
+  fs.readFile(path.join(contentDir, this.filePath), {
+    encoding: "utf-8"
+  }, function (err, fileContent) {
+    var fileIndex = getFileIndex(this.filePath);
+    if (err) {
+      // File was deleted
+      if (_files.getIn([fileIndex, "clean"])) {
+        // File is clean so close the tab
+        closeFile(this.filePath);
+      } else {
+        // File was dirty so clear disk content
+        _files = _files.update(fileIndex, function (file) {
+          return file.set("diskContent", "").set("clean", false);
+        });
 
-            // Remove the watcher
-            removeWatcher(this.filePath);
+        // Remove the watcher
+        removeWatcher(this.filePath);
 
-            EditorStore.emitChange();
-          }
-        } else {
-          // File changed on disk so update disk content and update
-          // content if file was clean
-          _files = _files.update(fileIndex, function (file) {
-            return file.set("diskContent", fileContent)
-              .set("content", file.get("clean") ? fileContent : file.get("content"));
-          }).update(fileIndex, function (file) {
-            return file.set("clean", file.get("content") === fileContent);
-          });
-          EditorStore.emitChange();
-        }
-      }.bind(this));
-      break;
-    case "rename":
-      console.log("RENAME");
-      break
-    default:
-      // no op
-  }
+        EditorStore.emitChange();
+      }
+    } else {
+      // File changed on disk so update disk content and update
+      // content if file was clean
+      _files = _files.update(fileIndex, function (file) {
+        return file.set("diskContent", fileContent)
+          .set("content", file.get("clean") ? fileContent : file.get("content"));
+      }).update(fileIndex, function (file) {
+        return file.set("clean", file.get("content") === fileContent);
+      });
+      EditorStore.emitChange();
+    }
+  }.bind(this));
 };
 
 function removeWatcher(filePath) {
