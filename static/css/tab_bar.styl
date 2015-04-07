@@ -1,4 +1,4 @@
-.editor-tabs
+.tab-bar
   list-style none
   background black
   padding-top 4px
@@ -8,7 +8,7 @@
   line-height 26px
   -webkit-user-select none
 
-.editor-tabs__item
+.tab-bar__item
   position relative
   display inline-block
   -webkit-flex 1
@@ -29,7 +29,7 @@
   &:hover
     background #808080
 
-.editor-tabs__item--is-focused
+.tab-bar__item--is-focused
   -webkit-flex 2
   background #ccc
   color black
@@ -37,7 +37,11 @@
   &:hover
     background #ccc
 
-.editor-tabs__close
+.tab-bar__item--is-dirty:before
+  content "* "
+  font-weight bold
+
+.tab-bar__close
   position absolute
   right 4px
   top 50%
@@ -50,6 +54,6 @@
   transform scale(0)
   transition transform .1s
 
-  .editor-tabs__item--is-focused &,
-  .editor-tabs__item:hover &
+  .tab-bar__item--is-focused &,
+  .tab-bar__item:hover &
     transform scale(1)

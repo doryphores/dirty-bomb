@@ -1,4 +1,5 @@
-var React = require("react");
+var React      = require("react"),
+    classNames = require("classnames");
 
 var TabBar = React.createClass({
   render: function() {
@@ -11,19 +12,18 @@ var TabBar = React.createClass({
           className={this._itemClasses(file)}
           onClick={this._onClick.bind(this, file)}>
             {file.get("name")}
-            <span className="editor-tabs__close close" />
+            <span className="tab-bar__close close" />
         </li>
       );
     }.bind(this));
-    return (<ul className="editor-tabs panel">{tabs}</ul>);
+    return (<ul className="tab-bar panel">{tabs}</ul>);
   },
 
   _itemClasses: function (file) {
-    var classes = "editor-tabs__item";
-    if (file.get("active")) {
-      classes += " editor-tabs__item--is-focused";
-    }
-    return classes;
+    return classNames("tab-bar__item", {
+      "tab-bar__item--is-focused" : file.get("active"),
+      "tab-bar__item--is-dirty"   : !file.get("clean")
+    });
   },
 
   _onClick: function (file, event) {
