@@ -30,7 +30,11 @@
   "devDependencies": {
     "atom-shell": "0.22.3",
     "chai": "^2.2.0",
-    "mocha": "^2.2.4"
+    "mocha": "^2.2.4",
+    "rewire": "^2.3.1",
+    "sinon": "^1.14.1",
+    "sinon-chai": "^2.7.0",
+    "temp": "^0.8.1"
   },
   "engines": {
     "atom-shell": "0.22.3"

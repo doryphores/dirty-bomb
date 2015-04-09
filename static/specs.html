@@ -11,6 +11,10 @@
     <script src="../node_modules/chai/chai.js"></script>
     <script>
     mocha.setup("bdd");
+    mocha.checkLeaks();
+    mocha.globals(["WebView", "_contentDir"]);
+    require("../test/spec_helpers");
+    require("../test/TreeStore_spec");
     mocha.run();
     </script>
   </body>
