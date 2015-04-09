@@ -14,17 +14,19 @@ var contentDir = path.resolve(__dirname, "../../repo/content");
 var _tree;
 var _nodeMap = {};
 var _watchers = {};
+var _expandedPaths = [];
 
 function absolute(nodePath) {
   return path.join(_contentDir, nodePath);
 }
 
 function init() {
-  unwatchNode("");
+  unwatchNode(".");
   _nodeMap = {};
+  _expandedPaths = [];
   _tree = makeNode({
     name: path.basename(_contentDir),
-    path: "",
+    path: ".",
     type: "folder"
   });
 }
@@ -47,21 +49,22 @@ function makeNode(node, address) {
 }
 
 function expandNode(nodePath) {
-  var nodePaths = [""];
+  var nodePaths = ["."];
 
-  if (nodePath.length > 0) {
+  if (nodePath !== ".") {
     nodePaths = _.reduce(nodePath.split("/"), function (nodePaths, p) {
       return nodePaths.concat(path.join(_.last(nodePaths), p));
-    }, [""]);
+    }, nodePaths);
   }
 
   nodePaths.forEach(function (p) {
     var address = _nodeMap[p];
-    if (!_tree.getIn(address.concat("expanded"))) {
+    if (!_.contains(_expandedPaths, p)) {
       _tree = _tree.setIn(address.concat("expanded"), true);
-      reloadNode(p);
-      watchNode(p);
+      _expandedPaths.push(p);
     }
+    reloadNode(p);
+    watchNode(p);
   });
 }
 
@@ -69,6 +72,7 @@ function collapseNode(nodePath) {
   var address = _nodeMap[nodePath];
   _tree = _tree.setIn(address.concat("expanded"), false);
   unwatchNode(nodePath);
+  _expandedPaths = _.without(_expandedPaths, nodePath);
 }
 
 function reloadNode(nodePath) {
@@ -141,16 +145,26 @@ function folderContents(dirPath) {
 }
 
 function watchNode(nodePath) {
-  unwatchNode(nodePath);
+  if (_watchers[nodePath]) {
+    _watchers[nodePath].close();
+    delete _watchers[nodePath];
+  }
+
   _watchers[nodePath] = PathWatcher.watch(absolute(nodePath), _.debounce(function () {
     reloadNode(nodePath);
     TreeStore.emitChange();
   }), 100);
+
+  findNode(nodePath).get("children").filter(function (n) {
+    return n.get("expanded");
+  }).forEach(function (n) {
+    watchNode(n.get("path"));
+  });
 }
 
 function unwatchNode(nodePath) {
   for (var watchPath in _watchers) {
-    if (nodePath === "" || watchPath.match("^" + nodePath + "(\/|$)")) {
+    if (nodePath === "." || watchPath.match("^" + nodePath + "(\/|$)")) {
       _watchers[watchPath].close();
       delete _watchers[watchPath];
     }
@@ -164,7 +178,7 @@ var TreeStore = assign({}, EventEmitter.prototype, {
   },
 
   getNode: function (nodePath) {
-    return findNode(nodePath || "");
+    return findNode(nodePath || ".");
   },
 
   emitChange: function () {

@@ -44,7 +44,7 @@ describe("TreeStore", function () {
       AppDispatcher.dispatch(initAction);
       var rootNode = TreeStore.getTree();
       expect(rootNode.get("name")).to.eql(path.basename(this.tempDir));
-      expect(rootNode.get("path")).to.eql("");
+      expect(rootNode.get("path")).to.eql(".");
       expect(rootNode.get("children")).to.be.an.instanceof(Immutable.List);
     });
   });
@@ -58,7 +58,7 @@ describe("TreeStore", function () {
       expect(TreeStore.getTree().get("expanded")).to.be.false;
       AppDispatcher.dispatch({
         actionType: "tree_expand",
-        nodePath: ""
+        nodePath: "."
       });
       expect(TreeStore.getTree().get("expanded")).to.be.true;
     });
@@ -68,7 +68,7 @@ describe("TreeStore", function () {
         actionType: "tree_expand",
         nodePath: "d/e/e/p"
       });
-      expect(TreeStore.getNode().get("expanded")).to.be.true;
+      expect(TreeStore.getNode(".").get("expanded")).to.be.true;
       expect(TreeStore.getNode("d").get("expanded")).to.be.true;
       expect(TreeStore.getNode("d/e").get("expanded")).to.be.true;
       expect(TreeStore.getNode("d/e/e").get("expanded")).to.be.true;
@@ -78,7 +78,7 @@ describe("TreeStore", function () {
     it("loads the node's children", function () {
       AppDispatcher.dispatch({
         actionType: "tree_expand",
-        nodePath: ""
+        nodePath: "."
       });
 
       var children = TreeStore.getTree().get("children");
@@ -88,7 +88,7 @@ describe("TreeStore", function () {
     it("does not load children recursively", function () {
       AppDispatcher.dispatch({
         actionType: "tree_expand",
-        nodePath: ""
+        nodePath: "."
       });
 
       var tree = TreeStore.getTree();
@@ -98,7 +98,7 @@ describe("TreeStore", function () {
     it("sorts children folder first", function () {
       AppDispatcher.dispatch({
         actionType: "tree_expand",
-        nodePath: ""
+        nodePath: "."
       });
 
       var children = TreeStore.getTree().get("children");
@@ -113,7 +113,7 @@ describe("TreeStore", function () {
       AppDispatcher.dispatch(initAction);
       AppDispatcher.dispatch({
         actionType: "tree_expand",
-        nodePath: ""
+        nodePath: "."
       });
     });
 
@@ -121,7 +121,7 @@ describe("TreeStore", function () {
       expect(TreeStore.getTree().get("expanded")).to.be.true;
       AppDispatcher.dispatch({
         actionType: "tree_collapse",
-        nodePath: ""
+        nodePath: "."
       });
       expect(TreeStore.getTree().get("expanded")).to.be.false;
     });
@@ -136,7 +136,7 @@ describe("TreeStore", function () {
       expect(TreeStore.getTree().getIn(["children", 0, "expanded"])).to.be.true;
       AppDispatcher.dispatch({
         actionType: "tree_collapse",
-        nodePath: ""
+        nodePath: "."
       });
       expect(TreeStore.getTree().getIn(["children", 0, "expanded"])).to.be.true;
     });
@@ -151,7 +151,7 @@ describe("TreeStore", function () {
       beforeEach(function () {
         AppDispatcher.dispatch({
           actionType: "tree_expand",
-          nodePath: ""
+          nodePath: "."
         });
       });
 
@@ -168,7 +168,7 @@ describe("TreeStore", function () {
       beforeEach(function () {
         AppDispatcher.dispatch({
           actionType: "tree_expand",
-          nodePath: ""
+          nodePath: "."
         });
       });
 
@@ -193,14 +193,14 @@ describe("TreeStore", function () {
       beforeEach(function () {
         AppDispatcher.dispatch({
           actionType: "tree_expand",
-          nodePath: ""
+          nodePath: "."
         });
       });
 
       it("stops watching for changes on the node", function (done) {
         AppDispatcher.dispatch({
           actionType: "tree_collapse",
-          nodePath: ""
+          nodePath: "."
         });
 
         fs.outputFileSync(this.tempDir + "/new_file");
@@ -221,14 +221,14 @@ describe("TreeStore", function () {
             actionType: "tree_expand",
             nodePath: "d/e/e/p"
           });
+
+          AppDispatcher.dispatch({
+            actionType: "tree_collapse",
+            nodePath: "."
+          });
         });
 
         it("stops watching for changes on the expanded children", function (done) {
-          AppDispatcher.dispatch({
-            actionType: "tree_collapse",
-            nodePath: ""
-          });
-
           fs.outputFileSync(this.tempDir + "/z/new_file");
           fs.outputFileSync(this.tempDir + "/d/e/e/p/new_file");
           setTimeout(function () {
@@ -242,7 +242,7 @@ describe("TreeStore", function () {
           beforeEach(function () {
             AppDispatcher.dispatch({
               actionType: "tree_expand",
-              nodePath: ""
+              nodePath: "."
             });
           });
 
