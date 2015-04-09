@@ -28,7 +28,9 @@
     "stylus": "^0.50.0"
   },
   "devDependencies": {
-    "atom-shell": "0.22.3"
+    "atom-shell": "0.22.3",
+    "chai": "^2.2.0",
+    "mocha": "^2.2.4"
   },
   "engines": {
     "atom-shell": "0.22.3"
