@@ -191,9 +191,9 @@ var TreeStore = assign({}, EventEmitter.prototype, {
     return findNode(nodePath || ".");
   },
 
-  emitChange: function () {
+  emitChange: _.debounce(function () {
     this.emit(CHANGE_EVENT);
-  },
+  }, 50),
 
   addChangeListener: function (listener) {
     this.on(CHANGE_EVENT, listener);

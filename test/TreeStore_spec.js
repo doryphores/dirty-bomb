@@ -32,12 +32,9 @@ describe("TreeStore", function () {
   });
 
   describe("init", function () {
-    it("emits a change event", function () {
-      var cb = sinon.spy();
-      TreeStore.addChangeListener(cb);
+    it("emits a change event", function (done) {
+      TreeStore.addChangeListener(done);
       AppDispatcher.dispatch(initAction);
-      expect(cb).to.have.been.called;
-      TreeStore.removeChangeListener(cb);
     });
 
     it("builds the root node", function () {
@@ -252,13 +249,13 @@ describe("TreeStore", function () {
           });
 
           it("restarts watching for changes on expanded children", function (done) {
-            fs.outputFileSync(this.tempDir + "/z/new_file");
-            fs.outputFileSync(this.tempDir + "/d/e/e/p/new_file");
-            setTimeout(function () {
+            TreeStore.addChangeListener(function () {
               expect(TreeStore.getNode("z").get("children").size).to.eql(4);
               expect(TreeStore.getNode("d/e/e/p").get("children").size).to.eql(2);
               done();
-            }, 500);
+            });
+            fs.outputFileSync(this.tempDir + "/z/new_file");
+            fs.outputFileSync(this.tempDir + "/d/e/e/p/new_file");
           });
         });
       });
