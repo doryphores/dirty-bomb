@@ -28,6 +28,10 @@ var CHANGE_EVENT = "change";
   Private methods
 \*=============================================*/
 
+/**
+ * Initialises the root node
+ * @param  {String|Array} pathsToExpand List of paths to expand
+ */
 function init(pathsToExpand) {
   _tree = makeNode({
     name: path.basename(_contentDir),
@@ -40,6 +44,13 @@ function init(pathsToExpand) {
   }
 }
 
+/**
+ * Creates an immutable version of the give node:
+ *  - gets its type if unknown
+ *  - stores the node's address for fast retrieval
+ * @param {String} node
+ * @param {Array}  address
+ */
 function makeNode(node, address) {
   address = address || [];
 
@@ -59,6 +70,12 @@ function makeNode(node, address) {
   return Immutable.Map(node);
 }
 
+/**
+ * Reloads the children of the given path from the file system:
+ *  - removes deleted nodes
+ *  - adds new nodes
+ * @param {String} nodePath
+ */
 function reloadNode(nodePath) {
   var address = _nodeMap[nodePath];
   var node = _tree.getIn(address);
@@ -99,6 +116,10 @@ function reloadNode(nodePath) {
   reindexNode(address);
 }
 
+/**
+ * Recursively re-maps the given node's children
+ * @param {Array} address
+ */
 function reindexNode(address) {
   _tree.getIn(address.concat("children")).forEach(function (n, i) {
     var nodeAddress = address.concat("children", i);
@@ -114,7 +135,7 @@ function reindexNode(address) {
  *  - remove expanded paths
  *  - unwatch path
  *  - remove node and all children from node map
- * @param {string} nodePath
+ * @param {String} nodePath
  */
 function tidyDeletedNode(nodePath) {
   unwatchNode(nodePath);
@@ -128,10 +149,22 @@ function tidyDeletedNode(nodePath) {
   return false;
 }
 
+/**
+ * Returns the node for the given path or undefined
+ * @param {String} nodePath
+ */
 function findNode(nodePath) {
   return _nodeMap[nodePath] && _tree.getIn(_nodeMap[nodePath]);
 }
 
+/**
+ * Expands a node:
+ *  - ensures the node's parents are expanded
+ *  - marks it as expanded
+ *  - reloads its children
+ *  - starts watching file system for changes
+ * @param {String} nodePath
+ */
 function expandNode(nodePath) {
   var nodePaths = ["."];
 
@@ -152,6 +185,12 @@ function expandNode(nodePath) {
   });
 }
 
+/**
+ * Collapses the given node:
+ *  - marks the node as collapsed
+ *  - stops watching file system for changes
+ * @param {String} nodePath
+ */
 function collapseNode(nodePath) {
   var address = _nodeMap[nodePath];
   _tree = _tree.setIn(address.concat("expanded"), false);
@@ -159,6 +198,10 @@ function collapseNode(nodePath) {
   _expandedPaths = _.without(_expandedPaths, nodePath);
 }
 
+/**
+ * Convenience method for toggling the node's expanded state
+ * @param {String} nodePath
+ */
 function toggleNode(nodePath) {
   var node = findNode(nodePath);
   if (!node || !node.get("expanded")) {
@@ -168,6 +211,13 @@ function toggleNode(nodePath) {
   }
 }
 
+/**
+ * Starts a file system watcher on the given node
+ *  - closes any previous watchers on the node
+ *  - starts a watcher on the node
+ *  - restarts watchers on its expanded children
+ * @param {String} nodePath
+ */
 function watchNode(nodePath) {
   if (_watchers[nodePath]) {
     _watchers[nodePath].close();
@@ -181,13 +231,15 @@ function watchNode(nodePath) {
     }
   }), 100);
 
-  findNode(nodePath).get("children").filter(function (n) {
-    return n.get("expanded");
-  }).forEach(function (n) {
-    watchNode(n.get("path"));
+  findNode(nodePath).get("children").forEach(function (n) {
+    if (n.get("expanded")) watchNode(n.get("path"));
   });
 }
 
+/**
+ * Stops file system watchers on the given node and all its children
+ * @param {String} nodePath
+ */
 function unwatchNode(nodePath) {
   for (var watchPath in _watchers) {
     if (nodePath === "." || watchPath.match("^" + nodePath + "(\/|$)")) {
@@ -197,6 +249,13 @@ function unwatchNode(nodePath) {
   }
 }
 
+/**
+ * Returns an array of node objects for the given directory path:
+ *  - ignores names from _ignoredFiles
+ *  - sorts folders first
+ *  - each node in array has the following keys: name, path, type
+ * @param {String} dirPath
+ */
 function folderContents(dirPath) {
   var absDirPath = absolute(dirPath);
   return _.difference(fs.readdirSync(absDirPath), _ignoredFiles).map(function (filename) {
@@ -212,6 +271,10 @@ function folderContents(dirPath) {
   });
 }
 
+/**
+ * Returns absolute version of given node path
+ * @param  {String} nodePath
+ */
 function absolute(nodePath) {
   return path.join(_contentDir, nodePath);
 }
