@@ -16,10 +16,11 @@ var fs            = require("fs"),
 var _contentDir = path.resolve(__dirname, "../../repo/content");
 var _ignoredFiles = [".DS_Store", "Thumbs.db", ".git"];
 
-var _tree;               // The immutable node tree
-var _nodeMap = {};       // To store path -> address mappings
-var _watchers = {};      // To store pathwatchers
-var _expandedPaths = []; // To keep track of which paths are expanded
+var _tree;                  // The immutable node tree
+var _nodeMap = {};          // To store path -> address mappings
+var _watchers = {};         // To store pathwatchers
+var _expandedPaths = [];    // To keep track of which paths are expanded
+var _selectedNodePath = ""; // The currently selected node
 
 var CHANGE_EVENT = "change";
 
@@ -66,6 +67,8 @@ function makeNode(node, address) {
     node.children = Immutable.List([]);
     node.expanded = false;
   }
+
+  node.selected = false;
 
   return Immutable.Map(node);
 }
@@ -146,6 +149,10 @@ function tidyDeletedNode(nodePath) {
     return p.match("^" + nodePath + "(\/|$)");
   });
 
+  if (_selectedNodePath.indexOf(nodePath) === 0) {
+    _selectedNodePath = "";
+  }
+
   return false;
 }
 
@@ -155,6 +162,17 @@ function tidyDeletedNode(nodePath) {
  */
 function findNode(nodePath) {
   return _nodeMap[nodePath] && _tree.getIn(_nodeMap[nodePath]);
+}
+
+function selectNode(nodePath) {
+  if (_selectedNodePath.length && _selectedNodePath !== nodePath) {
+    _tree = _tree.setIn(_nodeMap[_selectedNodePath].concat("selected"), false);
+  }
+
+  if (_selectedNodePath !== nodePath) {
+    _tree = _tree.setIn(_nodeMap[nodePath].concat("selected"), true);
+    _selectedNodePath = nodePath;
+  }
 }
 
 /**
@@ -294,6 +312,7 @@ var TreeStore = assign({}, EventEmitter.prototype, {
     _nodeMap = {};
     _expandedPaths = [];
     _tree = undefined;
+    _selectedNodePath = "";
     this.removeAllListeners(CHANGE_EVENT);
   },
 
@@ -333,6 +352,10 @@ AppDispatcher.register(function (action) {
       toggleNode(action.nodePath);
       TreeStore.emitChange();
       break;
+      case "tree_select":
+        selectNode(action.nodePath);
+        TreeStore.emitChange();
+        break;
     default:
       // no op
   }

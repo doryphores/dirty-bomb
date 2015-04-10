@@ -36,16 +36,15 @@
 
   &:before
     content ""
+    display none
     position absolute
     background #ccc
     left 0
     right 0
     height 26px
-    opacity 0
-    transition opacity .2s
 
 .tree__node--is-selected:before
-  opacity 1
+  display block
 
 
 // Tree labels

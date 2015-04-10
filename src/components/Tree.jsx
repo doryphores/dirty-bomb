@@ -2,12 +2,7 @@ var React          = require("react"),
     classNames     = require("classnames"),
     TreeStore      = require("../stores/TreeStore"),
     TreeActions    = require("../actions/TreeActions"),
-    EditorActions  = require("../actions/EditorActions"),
-    EventEmitter   = require("events").EventEmitter;
-
-
-// This event emitter helps manage a single selected node
-var ActiveNodeManager = new EventEmitter();
+    EditorActions  = require("../actions/EditorActions");
 
 
 /*=============================================*\
@@ -54,21 +49,19 @@ var Tree = module.exports = React.createClass({
 
 
 Tree.Node = React.createClass({
-  getInitialState: function () {
-    return {
-      selected: false
-    };
-  },
-
   shouldComponentUpdate: function(nextProps, nextState) {
-    return this.props.node !== nextProps.node
-      || this.state.selected != nextState.selected;
+    return this.props.node !== nextProps.node;
   },
 
   render: function () {
+    var nodeClasses = classNames("tree__node", {
+      "tree__node--is-selected" : this.props.node.get("selected"),
+      "tree__node--is-open"     : this.props.node.get("expanded")
+    });
+
     if (this._isFile()) {
       return (
-        <li className={this._nodeClasses()}>
+        <li className={nodeClasses}>
           <span
             className="tree__label tree__label--is-file"
             onClick={this._handleClick}
@@ -79,7 +72,7 @@ Tree.Node = React.createClass({
       );
     } else {
       return (
-        <li className={this._nodeClasses()}>
+        <li className={nodeClasses}>
           <span
             className="tree__label tree__label--is-folder"
             onClick={this._handleClick}>
@@ -104,33 +97,13 @@ Tree.Node = React.createClass({
     if (this._isFolder()) {
       TreeActions.toggle(this.props.node.get("path"));
     }
-
-    if (this.state.selected) return;
-
-    // This node is being selected. Broadcast this to any listeners
-    // and listen to any future broadcasts. This ensures a single node
-    // is selected at any time.
-    ActiveNodeManager.emit("selected", this.props.node.get("path"))
-    ActiveNodeManager.once("selected", function (nodePath) {
-      if (this.isMounted() && this.state.selected && nodePath != this.props.node.get("path")) {
-        this.setState({selected: false});
-      }
-    }.bind(this));
-
-    this.setState({selected: true});
+    TreeActions.select(this.props.node.get("path"));
   },
 
   _handleDoubleClick: function () {
     if (this._isFile()) {
       EditorActions.open(this.props.node.get("path"));
     }
-  },
-
-  _nodeClasses: function () {
-    return classNames("tree__node", {
-      "tree__node--is-selected" : this.state.selected,
-      "tree__node--is-open"     : this.props.node.get("expanded")
-    });
   },
 
   _isFile: function () {

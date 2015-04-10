@@ -165,6 +165,25 @@ describe("TreeStore", function () {
     });
   });
 
+  describe("selecting a node", function () {
+    beforeEach(function () {
+      TreeActions.init("z");
+    });
+
+    it("marks it as selected", function () {
+      TreeActions.select("z/file_2");
+      expect(TreeStore.getNode("z/file_2").get("selected")).to.be.true;
+    });
+
+    it("unmarks the previous selected node", function () {
+      TreeActions.select("z/file_2");
+      expect(TreeStore.getNode("z/file_2").get("selected")).to.be.true;
+      TreeActions.select("d");
+      expect(TreeStore.getNode("z/file_2").get("selected")).to.be.false;
+      expect(TreeStore.getNode("d").get("selected")).to.be.true;
+    });
+  });
+
   describe("watching for changes", function () {
     beforeEach(function () {
       TreeActions.init();
@@ -208,6 +227,7 @@ describe("TreeStore", function () {
 
       it("tidies up when nodes are deleted", function (done) {
         TreeActions.expand("d/e/e/p");
+        TreeActions.select("d/e/e/p/deep_1");
 
         TreeStore.addChangeListener(function () {
           var expandedPaths = TreeStore.__get__("_expandedPaths");
@@ -219,6 +239,7 @@ describe("TreeStore", function () {
           expect(watchers).to.not.have.keys("d", "d/e", "d/e/e", "d/e/e/p");
           var nodeMap = TreeStore.__get__("_nodeMap");
           expect(nodeMap).to.not.have.keys("d", "d/e", "d/e/e", "d/e/e/p");
+          expect(TreeStore.__get__("_selectedNodePath")).to.be.empty;
           done();
         });
         fs.removeSync(this.tempDir + "/d");

@@ -27,6 +27,13 @@ var TreeActions = {
       actionType: "tree_toggle",
       nodePath: nodePath
     });
+  },
+
+  select: function (nodePath) {
+    AppDispatcher.dispatch({
+      actionType: "tree_select",
+      nodePath: nodePath
+    });
   }
 };
 
