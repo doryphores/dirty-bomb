@@ -3,6 +3,7 @@ var React         = require("react"),
     path          = require("path"),
     CodeMirror    = require("codemirror"),
     classNames    = require("classnames"),
+    _             = require("underscore"),
     EditorActions = require("../actions/EditorActions");
 
 require("codemirror/mode/markdown/markdown");
@@ -42,7 +43,7 @@ var Editor = module.exports = React.createClass({
       value        : this.props.file.get("content")
     });
 
-    this.editor.on("change", this._onChange);
+    this.editor.on("change", _.debounce(this._onChange, 200));
 
     this.editor.focus();
   },
