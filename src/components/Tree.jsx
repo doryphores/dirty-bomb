@@ -10,20 +10,15 @@ var React          = require("react"),
 var ActiveNodeManager = new EventEmitter();
 
 
-function getTreeState() {
-  return {
-    rootNode: TreeStore.getTree()
-  };
-}
-
-
 /*=============================================*\
   Component definitions
 \*=============================================*/
 
 var Tree = module.exports = React.createClass({
   getInitialState: function () {
-    return getTreeState();
+    return {
+      rootNode: TreeStore.getNode(".")
+    };
   },
 
   componentDidMount: function () {
@@ -51,7 +46,9 @@ var Tree = module.exports = React.createClass({
   },
 
   _onChange: function () {
-    this.setState(getTreeState());
+    this.setState({
+      rootNode: TreeStore.getNode(".")
+    });
   }
 });
 

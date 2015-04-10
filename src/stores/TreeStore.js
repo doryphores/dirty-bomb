@@ -136,7 +136,7 @@ function reindexNode(address) {
 }
 
 function findNode(nodePath) {
-  return _tree.getIn(_nodeMap[nodePath]);
+  return _nodeMap[nodePath] && _tree.getIn(_nodeMap[nodePath]);
 }
 
 function folderContents(dirPath) {
@@ -185,10 +185,6 @@ function unwatchNode(nodePath) {
 
 
 var TreeStore = assign({}, EventEmitter.prototype, {
-  getTree: function () {
-    return _tree;
-  },
-
   getNode: function (nodePath) {
     return findNode(nodePath || ".");
   },
