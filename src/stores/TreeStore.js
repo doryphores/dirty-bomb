@@ -10,6 +10,7 @@ var fs            = require("fs"),
 var CHANGE_EVENT = "change";
 
 var _contentDir = path.resolve(__dirname, "../../repo/content");
+var _ignoredFiles = [".DS_Store", "Thumbs.db", ".git"];
 
 var _tree;
 var _nodeMap = {};
@@ -139,7 +140,7 @@ function findNode(nodePath) {
 
 function folderContents(dirPath) {
   var absDirPath = absolute(dirPath);
-  return fs.readdirSync(absDirPath).map(function (filename) {
+  return _.difference(fs.readdirSync(absDirPath), _ignoredFiles).map(function (filename) {
     var s = fs.statSync(path.join(absDirPath, filename));
     return {
       name : filename,

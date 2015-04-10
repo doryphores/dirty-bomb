@@ -78,8 +78,7 @@ describe("TreeStore", function () {
         nodePath: "."
       });
 
-      var children = TreeStore.getTree().get("children");
-      expect(children.size).to.eql(3);
+      expect(TreeStore.getTree().get("children").size).to.eql(3);
     });
 
     it("does not load children recursively", function () {
@@ -88,8 +87,21 @@ describe("TreeStore", function () {
         nodePath: "."
       });
 
-      var tree = TreeStore.getTree();
-      expect(tree.getIn(["children", 0, "children"]).size).to.eql(0);
+      expect(TreeStore.getNode("d").get("children").size).to.eql(0);
+    });
+
+    it("ignores .git, .DS_Store and Thumbs.db nodes", function () {
+      // Add some nodes to ignore
+      fs.outputFileSync(this.tempDir + "/.DS_Store", "");
+      fs.outputFileSync(this.tempDir + "/Thumbs.db", "");
+      fs.ensureDirSync(this.tempDir + "/.git");
+
+      AppDispatcher.dispatch({
+        actionType: "tree_expand",
+        nodePath: "."
+      });
+
+      expect(TreeStore.getTree().get("children").size).to.eql(3)
     });
 
     it("sorts children folder first", function () {
