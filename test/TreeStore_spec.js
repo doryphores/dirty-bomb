@@ -168,7 +168,7 @@ describe("TreeStore", function () {
       beforeEach(function () {
         AppDispatcher.dispatch({
           actionType: "tree_expand",
-          nodePath: "."
+          nodePath: "z"
         });
       });
 
@@ -177,15 +177,16 @@ describe("TreeStore", function () {
           expect(TreeStore.getTree().get("children").size).to.eql(2);
           done();
         });
-        fs.remove(this.tempDir + "/z");
+        fs.removeSync(this.tempDir + "/z");
       });
 
       it("re-indexes the node's children", function (done) {
         TreeStore.addChangeListener(function () {
-          expect(TreeStore.getTree().getIn(["children", 0, "name"])).to.eql("z");
+          expect(TreeStore.getNode("z").get("children").size).to.eql(3);
+          expect(TreeStore.getNode("z/file_2").get("name")).to.eql("file_2");
           done();
         });
-        fs.remove(this.tempDir + "/d");
+        fs.removeSync(this.tempDir + "/d");
       });
     });
 

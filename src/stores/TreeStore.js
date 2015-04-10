@@ -120,8 +120,16 @@ function reloadNode(nodePath) {
   });
 
   // Re-index node map
+  reindexNode(address);
+}
+
+function reindexNode(address) {
   _tree.getIn(address.concat("children")).forEach(function (n, i) {
-    _nodeMap[n.get("path")] = address.concat("children", i);
+    var nodeAddress = address.concat("children", i);
+    _nodeMap[n.get("path")] = nodeAddress;
+    if (n.get("type") === "folder") {
+      reindexNode(nodeAddress);
+    }
   });
 }
 
@@ -150,9 +158,11 @@ function watchNode(nodePath) {
     delete _watchers[nodePath];
   }
 
-  _watchers[nodePath] = PathWatcher.watch(absolute(nodePath), _.debounce(function () {
-    reloadNode(nodePath);
-    TreeStore.emitChange();
+  _watchers[nodePath] = PathWatcher.watch(absolute(nodePath), _.debounce(function (event) {
+    if (event === "change") {
+      reloadNode(nodePath);
+      TreeStore.emitChange();
+    }
   }), 100);
 
   findNode(nodePath).get("children").filter(function (n) {
