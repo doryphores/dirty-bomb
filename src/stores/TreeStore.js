@@ -202,6 +202,10 @@ var TreeStore = assign({}, EventEmitter.prototype, {
 
   removeChangeListener: function (listener) {
     this.removeListener(CHANGE_EVENT, listener);
+  },
+
+  removeAllChangeListeners: function () {
+    this.removeAllListeners(CHANGE_EVENT);
   }
 });
 
