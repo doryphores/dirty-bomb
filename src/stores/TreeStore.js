@@ -9,7 +9,7 @@ var fs            = require("fs"),
 
 var CHANGE_EVENT = "change";
 
-var contentDir = path.resolve(__dirname, "../../repo/content");
+var _contentDir = path.resolve(__dirname, "../../repo/content");
 
 var _tree;
 var _nodeMap = {};
@@ -94,9 +94,9 @@ function reloadNode(nodePath) {
       var found = _.find(entries, {name: n.get("name"), type: n.get("type")});
       if (!found) {
         // This node has been removed so unwatch it
-        // self.unwatchNode(n.get("path"));
+        unwatchNode(n.get("path"));
         // Collapse it recursively
-        // self.collapse(n.get("path"), true);
+        collapseNode(n.get("path"));
         // And delete from the map
         delete _nodeMap[n.get("path")];
       }

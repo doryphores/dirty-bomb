@@ -1,7 +1,7 @@
 var React          = require("react"),
     classNames     = require("classnames"),
-    ContentStore   = require("../stores/ContentStore"),
-    ContentActions = require("../actions/ContentActions"),
+    TreeStore      = require("../stores/TreeStore"),
+    TreeActions    = require("../actions/TreeActions"),
     EditorActions  = require("../actions/EditorActions"),
     EventEmitter   = require("events").EventEmitter;
 
@@ -12,7 +12,7 @@ var ActiveNodeManager = new EventEmitter();
 
 function getTreeState() {
   return {
-    rootNode: ContentStore.getTree()
+    rootNode: TreeStore.getTree()
   };
 }
 
@@ -27,22 +27,24 @@ var Tree = module.exports = React.createClass({
   },
 
   componentDidMount: function () {
-    ContentStore.addChangeListener(this._onChange);
+    TreeStore.addChangeListener(this._onChange);
+    TreeActions.init();
+    TreeActions.expand(".");
   },
 
   componentWillUnmount: function () {
-    ContentStore.removeChangeListener(this._onChange);
+    TreeStore.removeChangeListener(this._onChange);
   },
 
   render: function () {
+    if (!this.state.rootNode) return null;
     return (
       <div className="tree panel">
         <div className="tree__scroller">
           <ul className="tree__node-list tree__node-list--is-root">
             <Tree.Node
               key="root"
-              node={this.state.rootNode}
-              expanded={true} />
+              node={this.state.rootNode} />
           </ul>
         </div>
       </div>
@@ -58,15 +60,13 @@ var Tree = module.exports = React.createClass({
 Tree.Node = React.createClass({
   getInitialState: function () {
     return {
-      selected: false,
-      open: this.props.expanded
+      selected: false
     };
   },
 
   shouldComponentUpdate: function(nextProps, nextState) {
     return this.props.node !== nextProps.node
-      || this.state.selected != nextState.selected
-      || this.state.open != nextState.open;
+      || this.state.selected != nextState.selected;
   },
 
   render: function () {
@@ -106,13 +106,11 @@ Tree.Node = React.createClass({
 
   _handleClick: function () {
     if (this._isFolder()) {
-      this.setState({open: !this.state.open}, function () {
-        if (this.state.open) {
-          ContentActions.expand(this.props.node.get("path"));
-        } else {
-          ContentActions.collapse(this.props.node.get("path"));
-        }
-      }.bind(this));
+      if (this.props.node.get("expanded")) {
+        TreeActions.collapse(this.props.node.get("path"));
+      } else {
+        TreeActions.expand(this.props.node.get("path"));
+      }
     }
 
     if (this.state.selected) return;
@@ -139,7 +137,7 @@ Tree.Node = React.createClass({
   _nodeClasses: function () {
     return classNames("tree__node", {
       "tree__node--is-selected" : this.state.selected,
-      "tree__node--is-open"     : this.state.open
+      "tree__node--is-open"     : this.props.node.get("expanded")
     });
   },
 

@@ -188,6 +188,10 @@ describe("TreeStore", function () {
         });
         fs.removeSync(this.tempDir + "/d");
       });
+
+      context("when an expanded node is deleted", function () {
+        it("cleans up after itself");
+      });
     });
 
     describe("collapsing a previously expanded node", function () {

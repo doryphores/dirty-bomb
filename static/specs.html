@@ -12,7 +12,7 @@
     <script>
     mocha.setup("bdd");
     mocha.checkLeaks();
-    mocha.globals(["WebView", "_contentDir"]);
+    mocha.globals(["WebView"]);
     require("../test/spec_helpers");
     require("../test/TreeStore_spec");
     mocha.run();
