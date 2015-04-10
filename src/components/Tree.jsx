@@ -102,11 +102,7 @@ Tree.Node = React.createClass({
 
   _handleClick: function () {
     if (this._isFolder()) {
-      if (this.props.node.get("expanded")) {
-        TreeActions.collapse(this.props.node.get("path"));
-      } else {
-        TreeActions.expand(this.props.node.get("path"));
-      }
+      TreeActions.toggle(this.props.node.get("path"));
     }
 
     if (this.state.selected) return;

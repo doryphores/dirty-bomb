@@ -78,7 +78,7 @@ describe("TreeStore", function () {
     });
   });
 
-  describe("expand", function () {
+  describe("expanding a node", function () {
     beforeEach(function () {
       TreeActions.init();
     });
@@ -129,7 +129,7 @@ describe("TreeStore", function () {
     });
   });
 
-  describe("collapse", function () {
+  describe("collapsing a node", function () {
     beforeEach(function () {
       TreeActions.init(".");
     });
@@ -147,6 +147,21 @@ describe("TreeStore", function () {
       expect(TreeStore.getNode().getIn(["children", 0, "expanded"])).to.be.true;
       TreeActions.collapse(".");
       expect(TreeStore.getNode().getIn(["children", 0, "expanded"])).to.be.true;
+    });
+  });
+
+  describe("toggling a node", function () {
+    beforeEach(function () {
+      TreeActions.init();
+    });
+
+    it("toggles the expanded state of a node", function () {
+      TreeActions.toggle("z")
+      expect(TreeStore.getNode("z").get("expanded")).to.be.true;
+      TreeActions.toggle("z")
+      expect(TreeStore.getNode("z").get("expanded")).to.be.false;
+      TreeActions.toggle("z")
+      expect(TreeStore.getNode("z").get("expanded")).to.be.true;
     });
   });
 

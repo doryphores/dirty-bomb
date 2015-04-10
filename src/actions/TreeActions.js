@@ -20,6 +20,13 @@ var TreeActions = {
       actionType: "tree_collapse",
       nodePath: nodePath
     });
+  },
+
+  toggle: function (nodePath) {
+    AppDispatcher.dispatch({
+      actionType: "tree_toggle",
+      nodePath: nodePath
+    });
   }
 };
 
