@@ -206,8 +206,28 @@ describe("TreeStore", function () {
         fs.removeSync(this.tempDir + "/d");
       });
 
+      it("tidies up when nodes are deleted", function (done) {
+        TreeActions.expand("d/e/e/p");
+
+        TreeStore.addChangeListener(function () {
+          var expandedPaths = TreeStore.__get__("_expandedPaths");
+          expect(expandedPaths).to.not.include("d");
+          expect(expandedPaths).to.not.include("d/e");
+          expect(expandedPaths).to.not.include("d/e/e");
+          expect(expandedPaths).to.not.include("d/e/e/p");
+          var watchers = TreeStore.__get__("_watchers");
+          expect(watchers).to.not.have.keys("d", "d/e", "d/e/e", "d/e/e/p");
+          var nodeMap = TreeStore.__get__("_nodeMap");
+          expect(nodeMap).to.not.have.keys("d", "d/e", "d/e/e", "d/e/e/p");
+          done();
+        });
+        fs.removeSync(this.tempDir + "/d");
+      });
+
       context("when an expanded node is deleted", function () {
-        it("cleans up after itself");
+        it("cleans up after itself", function () {
+
+        });
       });
     });
 

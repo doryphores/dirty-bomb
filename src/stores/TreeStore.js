@@ -76,15 +76,7 @@ function reloadNode(nodePath) {
   var updateNode = function (children) {
     return children.filter(function (n) {
       var found = _.find(entries, {name: n.get("name"), type: n.get("type")});
-      if (!found) {
-        // This node has been removed so unwatch it
-        unwatchNode(n.get("path"));
-        // Collapse it recursively
-        collapseNode(n.get("path"));
-        // And delete from the map
-        delete _nodeMap[n.get("path")];
-      }
-      return found;
+      return !!found || tidyDeletedNode(n.get("path"));
     });
   };
 
@@ -115,6 +107,25 @@ function reindexNode(address) {
       reindexNode(nodeAddress);
     }
   });
+}
+
+/**
+ * Clean up after deleting a node:
+ *  - remove expanded paths
+ *  - unwatch path
+ *  - remove node and all children from node map
+ * @param {string} nodePath
+ */
+function tidyDeletedNode(nodePath) {
+  unwatchNode(nodePath);
+  _expandedPaths = _.reject(_expandedPaths, function (p) {
+    return p.match("^" + nodePath + "(\/|$)");
+  });
+  _nodeMap = _.omit(_nodeMap, function (address, p) {
+    return p.match("^" + nodePath + "(\/|$)");
+  });
+
+  return false;
 }
 
 function findNode(nodePath) {
