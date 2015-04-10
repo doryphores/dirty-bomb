@@ -1,10 +1,10 @@
 var AppDispatcher = require("../dispatcher/AppDispatcher");
 
 var TreeActions = {
-  init: function (nodePath) {
+  init: function (pathsToExpand) {
     AppDispatcher.dispatch({
       actionType: "tree_init",
-      nodePath: nodePath
+      pathsToExpand: pathsToExpand
     });
   },
 

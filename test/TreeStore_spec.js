@@ -41,6 +41,11 @@ describe("TreeStore", function () {
       expect(rootNode.get("path")).to.eql(".");
       expect(rootNode.get("children")).to.be.an.instanceof(Immutable.List);
     });
+
+    it("expands the given path", function () {
+      TreeActions.init(".");
+      expect(TreeStore.getTree().get("expanded")).to.be.true;
+    });
   });
 
   describe("expand", function () {

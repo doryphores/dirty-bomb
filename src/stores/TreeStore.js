@@ -21,15 +21,20 @@ function absolute(nodePath) {
   return path.join(_contentDir, nodePath);
 }
 
-function init() {
+function init(pathsToExpand) {
   unwatchNode(".");
   _nodeMap = {};
   _expandedPaths = [];
+
   _tree = makeNode({
     name: path.basename(_contentDir),
     path: ".",
     type: "folder"
   });
+
+  if (pathsToExpand) {
+    _.flatten([pathsToExpand]).forEach(expandNode);
+  }
 }
 
 function makeNode(node, address) {
@@ -212,7 +217,7 @@ var TreeStore = assign({}, EventEmitter.prototype, {
 AppDispatcher.register(function (action) {
   switch(action.actionType) {
     case "tree_init":
-      init();
+      init(action.pathsToExpand);
       TreeStore.emitChange();
       break;
     case "tree_expand":

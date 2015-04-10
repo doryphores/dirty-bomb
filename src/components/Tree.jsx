@@ -28,8 +28,7 @@ var Tree = module.exports = React.createClass({
 
   componentDidMount: function () {
     TreeStore.addChangeListener(this._onChange);
-    TreeActions.init();
-    TreeActions.expand(".");
+    TreeActions.init(".");
   },
 
   componentWillUnmount: function () {
