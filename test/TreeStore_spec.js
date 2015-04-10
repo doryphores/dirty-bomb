@@ -25,7 +25,7 @@ describe("TreeStore", function () {
   });
 
   afterEach(function () {
-    TreeStore.removeAllChangeListeners();
+    TreeStore.reset();
   });
 
   describe("init", function () {

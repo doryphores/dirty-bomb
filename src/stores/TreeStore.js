@@ -22,10 +22,6 @@ function absolute(nodePath) {
 }
 
 function init(pathsToExpand) {
-  unwatchNode(".");
-  _nodeMap = {};
-  _expandedPaths = [];
-
   _tree = makeNode({
     name: path.basename(_contentDir),
     path: ".",
@@ -197,6 +193,14 @@ var TreeStore = assign({}, EventEmitter.prototype, {
     return findNode(nodePath || ".");
   },
 
+  reset: function () {
+    unwatchNode(".");
+    _nodeMap = {};
+    _expandedPaths = [];
+    _tree = undefined;
+    this.removeAllListeners(CHANGE_EVENT);
+  },
+
   emitChange: _.debounce(function () {
     this.emit(CHANGE_EVENT);
   }, 50),
@@ -207,10 +211,6 @@ var TreeStore = assign({}, EventEmitter.prototype, {
 
   removeChangeListener: function (listener) {
     this.removeListener(CHANGE_EVENT, listener);
-  },
-
-  removeAllChangeListeners: function () {
-    this.removeAllListeners(CHANGE_EVENT);
   }
 });
 
