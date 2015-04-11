@@ -7,7 +7,7 @@ exports.render = function () {
   React.render(
     <div className="panel-container horizontal">
       <Tree />
-      <div className="panel-container vertical">
+      <div className="workspace panel-container vertical">
         <ToolBar />
         <EditorPanes />
       </div>

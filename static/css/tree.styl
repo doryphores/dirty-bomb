@@ -1,17 +1,23 @@
 .tree
+  position relative
+  z-index 2
   -webkit-flex 0 0 auto
   width 300px
   height 100%
-  overflow auto
   background #a0a0a0
   -webkit-user-select none
 
+.tree__resizer
+  position absolute
+  right -5px
+  top 0
+  bottom 0
+  width 5px
+  cursor col-resize
 
 .tree__scroller
-  position relative
-  padding 10px
-  min-width -webkit-min-content
   height 100%
+  overflow auto
 
 
 // Tree node lists
@@ -27,6 +33,10 @@
 
 .tree__node-list--is-root
   display block
+  position relative
+  padding 10px
+  min-width -webkit-min-content
+  height 100%
 
 
 // Tree nodes

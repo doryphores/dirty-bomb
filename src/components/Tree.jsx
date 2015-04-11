@@ -37,6 +37,9 @@ var Tree = module.exports = React.createClass({
               node={this.state.rootNode} />
           </ul>
         </div>
+        <div
+          className="tree__resizer"
+          onMouseDown={this._startResize} />
       </div>
     );
   },
@@ -45,6 +48,20 @@ var Tree = module.exports = React.createClass({
     this.setState({
       rootNode: TreeStore.getNode(".")
     });
+  },
+
+  _startResize: function () {
+    document.addEventListener("mouseup", this._endResize);
+    document.addEventListener("mousemove", this._resize);
+  },
+
+  _resize: function (evt) {
+    this.getDOMNode().style.width = evt.clientX + "px";
+  },
+
+  _endResize: function () {
+    document.removeEventListener("mousemove", this._resize);
+    document.removeEventListener("mouseup", this._endResize);
   }
 });
 
