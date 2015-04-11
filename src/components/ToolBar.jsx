@@ -18,7 +18,7 @@ module.exports = React.createClass({
 
   render: function () {
     return (
-      <div className="toolbar panel">
+      <div className="toolbar">
         <button onClick={this.quit}>Quit</button>
         <button onClick={this.reload}>Reload</button>
         <button onClick={this.runSpecs}>Run specs</button>

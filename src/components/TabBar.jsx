@@ -16,7 +16,7 @@ var TabBar = React.createClass({
         </li>
       );
     }.bind(this));
-    return (<ul className="tab-bar panel">{tabs}</ul>);
+    return (<ul className="tab-bar">{tabs}</ul>);
   },
 
   _itemClasses: function (file) {

@@ -72,7 +72,7 @@ var Editor = module.exports = React.createClass({
     return (
       <div className={this._classNames()}>
         <div className="editor panel-container vertical">
-          <div className="editor-toolbar panel">
+          <div className="editor-toolbar">
             <button onClick={this._onSave}>Save</button>
             <button onClick={this.props.onClose}>Close</button>
           </div>

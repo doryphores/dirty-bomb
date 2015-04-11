@@ -27,8 +27,9 @@ var Tree = module.exports = React.createClass({
 
   render: function () {
     if (!this.state.rootNode) return null;
+
     return (
-      <div className="tree panel">
+      <div className="tree">
         <div className="tree__scroller">
           <ul className="tree__node-list tree__node-list--is-root">
             <Tree.Node
