@@ -1,0 +1,22 @@
+.button
+  padding 6px 10px
+  border none
+  background #2c2c2c
+  color #f2f2f2
+  font-family Source Sans Pro
+  outline none
+
+  + .button
+    margin-left 1px
+
+  &:first-child
+    border-radius 3px 0 0 3px
+
+  &:last-child
+    border-radius 0 3px 3px 0
+
+  &:only-child
+    border-radius 3px
+
+.button__label + .button__icon
+  margin-left 10px

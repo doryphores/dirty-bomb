@@ -11,8 +11,8 @@ var TabBar = React.createClass({
           key={file.get("path")}
           className={this._itemClasses(file)}
           onClick={this._onClick.bind(this, file)}>
-            <span className="tab-bar__label">{file.get("name")}</span>
-            <span className="tab-bar__close icon-x close" />
+            <span className="tab-bar__label icon-document-alt-fill">{file.get("name")}</span>
+            <span className="tab-bar__close icon-x js-close" />
         </li>
       );
     }.bind(this));
@@ -27,7 +27,7 @@ var TabBar = React.createClass({
   },
 
   _onClick: function (file, event) {
-    if (event.target.classList.contains("close")) {
+    if (event.target.classList.contains("js-close")) {
       this.props.onClose(file.get("path"));
     } else {
       this.props.onChangeFocus(file.get("path"));

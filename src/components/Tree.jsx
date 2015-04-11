@@ -77,11 +77,17 @@ Tree.Node = React.createClass({
       "tree__node--is-open"     : this.props.node.get("expanded")
     });
 
+    var labelClasses = classNames("tree__label", {
+      "icon-document-alt-fill": this._isFile(),
+      "icon-folder-fill": this._isFolder() && !this._isRoot(),
+      "icon-box": this._isRoot()
+    });
+
     if (this._isFile()) {
       return (
         <li className={nodeClasses}>
           <span
-            className="tree__label tree__label--is-file"
+            className={labelClasses}
             onClick={this._handleClick}
             onDoubleClick={this._handleDoubleClick}>
             {this.props.node.get("name")}
@@ -92,7 +98,7 @@ Tree.Node = React.createClass({
       return (
         <li className={nodeClasses}>
           <span
-            className="tree__label tree__label--is-folder"
+            className={labelClasses}
             onClick={this._handleClick}>
             {this.props.node.get("name")}
           </span>
@@ -130,5 +136,9 @@ Tree.Node = React.createClass({
 
   _isFolder: function () {
     return this.props.node.get("type") === "folder";
+  },
+
+  _isRoot: function () {
+    return this.props.node.get("path") === ".";
   }
 });

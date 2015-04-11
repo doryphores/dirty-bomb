@@ -1,13 +1,7 @@
-var remote = require("remote");
-var app    = remote.require("app");
 var React  = require("react");
 var ipc    = require("ipc");
 
 module.exports = React.createClass({
-  quit: function () {
-    app.quit();
-  },
-
   reload: function () {
     window.location.reload();
   },
@@ -19,9 +13,14 @@ module.exports = React.createClass({
   render: function () {
     return (
       <div className="toolbar">
-        <button onClick={this.quit}>Quit</button>
-        <button onClick={this.reload}>Reload</button>
-        <button onClick={this.runSpecs}>Run specs</button>
+        <button className="button" onClick={this.reload}>
+          <span className="button__label">Reload</span>
+          <span className="button__icon icon-loop" />
+        </button>
+        <button className="button" onClick={this.runSpecs}>
+          <span className="button__label">Run specs</span>
+          <span className="button__icon icon-beaker" />
+        </button>
       </div>
     );
   }
