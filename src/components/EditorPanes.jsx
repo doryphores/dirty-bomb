@@ -34,6 +34,8 @@ var EditorPanes = React.createClass({
       );
     }.bind(this));
 
+    if (editors.length === 0) return null;
+
     return (
       <div className="panel-container vertical">
         <TabBar

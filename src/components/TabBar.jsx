@@ -11,7 +11,7 @@ var TabBar = React.createClass({
           key={file.get("path")}
           className={this._itemClasses(file)}
           onClick={this._onClick.bind(this, file)}>
-            {file.get("name")}
+            <span className="tab-bar__label">{file.get("name")}</span>
             <span className="tab-bar__close icon-x close" />
         </li>
       );

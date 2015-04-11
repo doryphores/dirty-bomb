@@ -2,11 +2,10 @@
   display -webkit-flex
   -webkit-flex-direction row
   -webkit-flex 0 0 auto
-  padding-top 10px
+  border-bottom 5px solid #d2d2d2
   list-style none
-  background black
   font-size 12px
-  line-height 26px
+  line-height 24px
   -webkit-user-select none
 
 
@@ -19,32 +18,43 @@
   width -webkit-min-content
   max-width 160px
   min-width 60px
-  padding 0 20px 0 10px
+  padding 5px 20px 0 8px
   overflow hidden
   text-overflow ellipsis
   white-space nowrap
-  background black
+  background #808080
   border-radius 2px 2px 0 0
   color #efefef
   -webkit-font-smoothing subpixel-antialiased
   cursor default
-  transition background .1s
 
   &:hover
-    background #535353
+    background #2c2c2c
 
 .tab-bar__item--is-focused
   -webkit-flex 2
-  background #ccc
-  color black
+  background #d2d2d2
+  color #2c2c2c
   -webkit-font-smoothing antialiased
 
   &:hover
-    background #ccc
+    background #d2d2d2
 
 .tab-bar__item--is-dirty:before
   content "* "
   font-weight bold
+
+
+.tab-bar__label:before
+  content "\e61c"
+  font-family 'iconic'
+  font-style normal
+  font-weight normal
+  font-variant normal
+  text-transform none
+  line-height 1
+  -webkit-font-smoothing antialiased
+  margin-right 5px
 
 
 // Close icon
