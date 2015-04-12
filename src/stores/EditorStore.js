@@ -125,6 +125,21 @@ function saveFile(filePath, close) {
   );
 }
 
+function deleteFile(filePath) {
+  ipc.on("dialog.message.callback", function (button) {
+    if (button === 1) {
+      closeFile(filePath);
+      shell.moveItemToTrash(path.join(contentDir, filePath));
+    }
+  });
+  ipc.send("dialog.message", {
+    type: "warning",
+    message: "Are you sure you want to delete this file?",
+    detail: "Your are deleting '" + filePath + "'.",
+    buttons: ["Cancel", "Move to trash"]
+  });
+}
+
 var CHANGE_EVENT = "change";
 
 var EditorStore = assign({}, EventEmitter.prototype, {
@@ -165,6 +180,9 @@ AppDispatcher.register(function (action) {
       break;
     case "editor_save":
       saveFile(action.nodePath, action.close);
+      break;
+    case "editor_delete":
+      deleteFile(action.nodePath);
       break;
     default:
       // no op

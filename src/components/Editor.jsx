@@ -73,9 +73,13 @@ var Editor = module.exports = React.createClass({
       <div className={this._classNames()}>
         <div className="editor panel-container vertical">
           <div className="editor-toolbar">
-            <button onClick={this._onSave} className="button">
+            <button className="button" onClick={this._onSave}>
               <span className="button__label">Save</span>
               <span className="button__icon icon-checkmark" />
+            </button>
+            <button className="button" onClick={this._onDelete}>
+              <span className="button__label">Delete</span>
+              <span className="button__icon icon-trash-fill" />
             </button>
             <button className="button">
               <span className="button__label">Insert image</span>
@@ -101,5 +105,9 @@ var Editor = module.exports = React.createClass({
 
   _onSave: function () {
     EditorActions.save(this.props.file.get("path"));
+  },
+
+  _onDelete: function () {
+    EditorActions.delete(this.props.file.get("path"));
   }
 });

@@ -44,6 +44,13 @@ var EditorActions = {
       nodePath: nodePath,
       close: true
     });
+  },
+
+  delete: function (nodePath) {
+    AppDispatcher.dispatch({
+      actionType: "editor_delete",
+      nodePath: nodePath
+    });
   }
 };
 
