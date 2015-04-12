@@ -6,6 +6,8 @@ var fs            = require("fs"),
     _             = require("underscore"),
     PathWatcher   = require("pathwatcher"),
     AppDispatcher = require("../dispatcher/AppDispatcher");
+    ipc           = require("ipc"),
+    shell         = require("shell");
 
 
 /*=============================================*\
@@ -356,6 +358,19 @@ AppDispatcher.register(function (action) {
         selectNode(action.nodePath);
         TreeStore.emitChange();
         break;
+    case "tree_delete":
+      ipc.on("dialog.message.callback", function (button) {
+        if (button === 1) {
+          shell.moveItemToTrash(absolute(action.nodePath));
+        }
+      });
+      ipc.send("dialog.message", {
+        type: "warning",
+        message: "Are you sure you want to delete the selected item?",
+        detail: "Your are deleting '" + action.nodePath + "'.",
+        buttons: ["Cancel", "Move to trash"]
+      });
+      break;
     default:
       // no op
   }

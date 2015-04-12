@@ -34,6 +34,13 @@ var TreeActions = {
       actionType: "tree_select",
       nodePath: nodePath
     });
+  },
+
+  delete: function (nodePath) {
+    AppDispatcher.dispatch({
+      actionType: "tree_delete",
+      nodePath: nodePath
+    });
   }
 };
 

@@ -1,8 +1,10 @@
-var React          = require("react"),
-    classNames     = require("classnames"),
-    TreeStore      = require("../stores/TreeStore"),
-    TreeActions    = require("../actions/TreeActions"),
-    EditorActions  = require("../actions/EditorActions");
+var React         = require("react"),
+    classNames    = require("classnames"),
+    TreeStore     = require("../stores/TreeStore"),
+    TreeActions   = require("../actions/TreeActions"),
+    EditorActions = require("../actions/EditorActions");
+    remote        = require("remote"),
+    Menu          = remote.require("menu");
 
 
 /*=============================================*\
@@ -89,6 +91,7 @@ Tree.Node = React.createClass({
           <span
             className={labelClasses}
             onClick={this._handleClick}
+            onContextMenu={this._showMenu}
             onDoubleClick={this._handleDoubleClick}>
             {this.props.node.get("name")}
           </span>
@@ -99,7 +102,8 @@ Tree.Node = React.createClass({
         <li className={nodeClasses}>
           <span
             className={labelClasses}
-            onClick={this._handleClick}>
+            onClick={this._handleClick}
+            onContextMenu={this._showMenu}>
             {this.props.node.get("name")}
           </span>
           <ul className="tree__node-list">
@@ -128,6 +132,29 @@ Tree.Node = React.createClass({
     if (this._isFile()) {
       EditorActions.open(this.props.node.get("path"));
     }
+  },
+
+  _showMenu: function () {
+    var nodePath = this.props.node.get("path");
+
+    var menu = this.menu || Menu.buildFromTemplate([
+      {
+        label: "New file",
+        click: function () {
+
+        }
+      },
+      {
+        label: "Delete",
+        click: function () {
+          TreeActions.delete(nodePath);
+        }
+      }
+    ]);
+
+    // setTimeout(function () {
+      menu.popup(remote.getCurrentWindow());
+    // }, 300);
   },
 
   _isFile: function () {
