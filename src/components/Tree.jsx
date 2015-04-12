@@ -82,9 +82,9 @@ Tree.Node = React.createClass({
     });
 
     var labelClasses = classNames("tree__label", {
-      "icon-document-alt-fill": this._isFile(),
-      "icon-folder-fill": this._isFolder() && !this._isRoot(),
-      "icon-box": this._isRoot()
+      "icon-file-text": this._isFile(),
+      "icon-file-directory": this._isFolder() && !this._isRoot(),
+      "icon-repo": this._isRoot()
     });
 
     if (this._isFile()) {

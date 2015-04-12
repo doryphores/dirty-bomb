@@ -6,24 +6,23 @@ var TabBar = React.createClass({
     if (this.props.files.size === 0) return null;
 
     var tabs = this.props.files.map(function (file) {
+      var itemClasses = classNames("tab-bar__item", {
+        "tab-bar__item--is-focused": file.get("active"),
+        "tab-bar__item--is-dirty"  : !file.get("clean")
+      });
+
       return (
         <li
           key={file.get("path")}
-          className={this._itemClasses(file)}
+          className={itemClasses}
           onClick={this._onClick.bind(this, file)}>
-            <span className="tab-bar__label icon-document-alt-fill">{file.get("name")}</span>
-            <span className="tab-bar__close icon-x js-close" />
+            <span className="tab-bar__label">{file.get("name")}</span>
+            <span className="tab-bar__close icon js-close" />
         </li>
       );
     }.bind(this));
-    return (<ul className="tab-bar">{tabs}</ul>);
-  },
 
-  _itemClasses: function (file) {
-    return classNames("tab-bar__item", {
-      "tab-bar__item--is-focused" : file.get("active"),
-      "tab-bar__item--is-dirty"   : !file.get("clean")
-    });
+    return (<ul className="tab-bar">{tabs}</ul>);
   },
 
   _onClick: function (file, event) {

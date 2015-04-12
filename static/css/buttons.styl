@@ -24,5 +24,10 @@
   &:only-child
     border-radius 3px
 
-.button__label + .button__icon
-  margin-left 10px
+.button__icon
+  position relative
+  top 2px
+  vertical-align middle
+
+  .button__label + &
+    margin-left 10px

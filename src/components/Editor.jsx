@@ -76,15 +76,15 @@ var Editor = module.exports = React.createClass({
           <div className="editor-toolbar">
             <button className="button" onClick={this._onSave}>
               <span className="button__label">Save</span>
-              <span className="button__icon icon-checkmark" />
+              <span className="button__icon icon-check" />
             </button>
             <button className="button" onClick={this._onDelete}>
               <span className="button__label">Delete</span>
-              <span className="button__icon icon-trash-fill" />
+              <span className="button__icon icon-trashcan" />
             </button>
             <button className="button">
               <span className="button__label">Insert image</span>
-              <span className="button__icon icon-camera" />
+              <span className="button__icon icon-device-camera" />
             </button>
           </div>
           <div className="cm-container" ref="editor" />

@@ -15,11 +15,11 @@ module.exports = React.createClass({
       <div className="toolbar">
         <button className="button" onClick={this.reload}>
           <span className="button__label">Reload</span>
-          <span className="button__icon icon-loop" />
+          <span className="button__icon icon-sync" />
         </button>
         <button className="button" onClick={this.runSpecs}>
           <span className="button__label">Run specs</span>
-          <span className="button__icon icon-beaker" />
+          <span className="button__icon icon-checklist" />
         </button>
       </div>
     );

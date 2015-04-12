@@ -5,7 +5,7 @@
   border-bottom 5px solid #d2d2d2
   list-style none
   font-size 12px
-  line-height 24px
+  line-height 30px
   -webkit-user-select none
 
 
@@ -18,9 +18,10 @@
   width -webkit-min-content
   max-width 160px
   min-width 60px
-  padding 5px 20px 0 8px
+  padding 0 20px 0 8px
   overflow hidden
   text-overflow ellipsis
+  text-align center
   white-space nowrap
   background #808080
   border-radius 2px 2px 0 0
@@ -40,16 +41,6 @@
   &:hover
     background #d2d2d2
 
-.tab-bar__item--is-dirty:before
-  content "* "
-  font-weight bold
-
-
-// Tab labels
-
-.tab-bar__label:before
-  margin-right 5px
-
 
 // Close icon
 
@@ -57,19 +48,29 @@
   position absolute
   right 4px
   top 50%
-  margin-top -6px
-  width 12px
-  height 12px
+  margin-top -8px
+  width 16px
+  height 16px
   color white
   text-align center
-  font-size 10px
-  line-height 12px
+  line-height 16px
   transform scale(0)
   transition transform .1s
+
+  &:before
+    @extends $icon, .icon-x:before
+    font-size 12px
+    line-height 16px
+
+    .tab-bar__item--is-dirty &
+      @extends .icon-primitive-dot:before
 
   .tab-bar__item--is-focused &,
   .tab-bar__item:hover &
     transform scale(1)
+
+  .tab-bar__item:hover &:before
+    @extends .icon-x:before
 
   .tab-bar__item--is-focused &
     color #535353
