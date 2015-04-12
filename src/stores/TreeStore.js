@@ -1,11 +1,12 @@
-var fs            = require("fs"),
+var fs            = require("fs-extra"),
     path          = require("path"),
     assign        = require("object-assign"),
     EventEmitter  = require("events").EventEmitter,
     Immutable     = require("immutable"),
     _             = require("underscore"),
     PathWatcher   = require("pathwatcher"),
-    AppDispatcher = require("../dispatcher/AppDispatcher");
+    AppDispatcher = require("../dispatcher/AppDispatcher"),
+    EditorActions = require("../actions/EditorActions"),
     ipc           = require("ipc"),
     shell         = require("shell");
 
@@ -336,7 +337,7 @@ var TreeStore = assign({}, EventEmitter.prototype, {
   Register actions
 \*=============================================*/
 
-AppDispatcher.register(function (action) {
+TreeStore.dispatchToken = AppDispatcher.register(function (action) {
   switch(action.actionType) {
     case "tree_init":
       init(action.pathsToExpand);
@@ -354,10 +355,27 @@ AppDispatcher.register(function (action) {
       toggleNode(action.nodePath);
       TreeStore.emitChange();
       break;
-      case "tree_select":
-        selectNode(action.nodePath);
-        TreeStore.emitChange();
-        break;
+    case "tree_select":
+      selectNode(action.nodePath);
+      TreeStore.emitChange();
+      break;
+    case "tree_create":
+      ipc.on("dialog.save.callback", function (savedPath) {
+        if (savedPath) {
+          fs.outputFile(savedPath, "", function (err) {
+            if (err) {
+              console.log(err);
+            } else {
+              EditorActions.open(path.relative(_contentDir, savedPath));
+            }
+          });
+        }
+      });
+      ipc.send("dialog.save", {
+        title: "Save file",
+        defaultPath: absolute(action.savePath)
+      });
+      break;
     case "tree_delete":
       ipc.on("dialog.message.callback", function (button) {
         if (button === 1) {

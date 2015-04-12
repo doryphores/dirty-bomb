@@ -3,6 +3,7 @@ var React         = require("react"),
     TreeStore     = require("../stores/TreeStore"),
     TreeActions   = require("../actions/TreeActions"),
     EditorActions = require("../actions/EditorActions");
+    path          = require("path"),
     remote        = require("remote"),
     Menu          = remote.require("menu");
 
@@ -136,12 +137,19 @@ Tree.Node = React.createClass({
 
   _showMenu: function () {
     var nodePath = this.props.node.get("path");
+    var nodeType = this.props.node.get("type");
+
+    TreeActions.select(this.props.node.get("path"));
 
     var menu = this.menu || Menu.buildFromTemplate([
       {
         label: "New file",
         click: function () {
-
+          var savePath = nodePath;
+          if (nodeType === "file") {
+            savePath = path.dirname(nodePath);
+          }
+          TreeActions.create(savePath);
         }
       },
       {
@@ -152,9 +160,9 @@ Tree.Node = React.createClass({
       }
     ]);
 
-    // setTimeout(function () {
+    setTimeout(function () {
       menu.popup(remote.getCurrentWindow());
-    // }, 300);
+    }, 50)
   },
 
   _isFile: function () {

@@ -33,6 +33,12 @@ ipc.on("dialog.message", function (event, options) {
   });
 });
 
+ipc.on("dialog.save", function (event, options) {
+  dialog.showSaveDialog(mainWindow, options, function (savePath) {
+    event.sender.send("dialog.save.callback", savePath);
+  });
+});
+
 ipc.on("spec", function () {
   specWindow = new BrowserWindow({
     width: 800,

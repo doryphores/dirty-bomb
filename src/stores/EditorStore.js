@@ -6,7 +6,7 @@ var fs            = require("fs-extra"),
     Immutable     = require("immutable"),
     AppDispatcher = require("../dispatcher/AppDispatcher");
 
-var contentDir = path.resolve(__dirname, "../../repo/content");
+var _contentDir = path.resolve(__dirname, "../../repo/content");
 
 var _files = Immutable.List();
 var _activeFile = "";
@@ -25,7 +25,7 @@ function openFile(filePath) {
     setIndexAsActive(fileIndex);
     EditorStore.emitChange();
   } else {
-    fs.readFile(path.join(contentDir, filePath), {
+    fs.readFile(path.join(_contentDir, filePath), {
       encoding: "utf-8"
     }, function (err, fileContent) {
       if (_activeFile) {
@@ -104,7 +104,7 @@ function saveFile(filePath, close) {
   removeWatcher(filePath);
 
   fs.outputFile(
-    path.join(contentDir, filePath),
+    path.join(_contentDir, filePath),
     content,
     function (err) {
       if (err) {
@@ -129,7 +129,7 @@ function deleteFile(filePath) {
   ipc.on("dialog.message.callback", function (button) {
     if (button === 1) {
       closeFile(filePath);
-      shell.moveItemToTrash(path.join(contentDir, filePath));
+      shell.moveItemToTrash(path.join(_contentDir, filePath));
     }
   });
   ipc.send("dialog.message", {
@@ -164,7 +164,7 @@ var EditorStore = assign({}, EventEmitter.prototype, {
   }
 });
 
-AppDispatcher.register(function (action) {
+EditorStore.dispatchToken = AppDispatcher.register(function (action) {
   switch(action.actionType) {
     case "editor_open":
       openFile(action.nodePath);
@@ -196,7 +196,7 @@ var Watcher = function (filePath) {
 };
 
 Watcher.prototype.start = function () {
-  this.watcher = PathWatcher.watch(path.join(contentDir, this.filePath),
+  this.watcher = PathWatcher.watch(path.join(_contentDir, this.filePath),
     this.updateFromDisk.bind(this));
 };
 
@@ -206,7 +206,7 @@ Watcher.prototype.stop = function () {
 };
 
 Watcher.prototype.updateFromDisk = function () {
-  fs.readFile(path.join(contentDir, this.filePath), {
+  fs.readFile(path.join(_contentDir, this.filePath), {
     encoding: "utf-8"
   }, function (err, fileContent) {
     var fileIndex = getFileIndex(this.filePath);

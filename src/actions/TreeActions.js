@@ -36,6 +36,13 @@ var TreeActions = {
     });
   },
 
+  create: function (savePath) {
+    AppDispatcher.dispatch({
+      actionType: "tree_create",
+      savePath: savePath
+    });
+  },
+
   delete: function (nodePath) {
     AppDispatcher.dispatch({
       actionType: "tree_delete",
