@@ -1,9 +1,10 @@
 var React         = require("react"),
     Showdown      = require("showdown"),
     path          = require("path"),
+    _             = require("underscore"),
     CodeMirror    = require("codemirror"),
     classNames    = require("classnames"),
-    _             = require("underscore"),
+    Dialogs       = require("../Dialogs"),
     EditorActions = require("../actions/EditorActions");
 
 require("codemirror/mode/markdown/markdown");
@@ -108,6 +109,14 @@ var Editor = module.exports = React.createClass({
   },
 
   _onDelete: function () {
-    EditorActions.delete(this.props.file.get("path"));
+    var filePath = this.props.file.get("path");
+
+    Dialogs.confirm({
+      message: "Are you sure you want to delete this file?",
+      detail: "Your are deleting '" + filePath + "'.",
+      buttons: ["Cancel", "Move to trash"]
+    }, function (button) {
+      if (button === 1) EditorActions.delete(filePath);
+    });
   }
 });

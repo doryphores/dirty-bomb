@@ -7,9 +7,7 @@ var mainWindow = null;
 var specWindow = null;
 
 app.on("window-all-closed", function () {
-  if (process.platform != "darwin") {
-    app.quit();
-  }
+  app.quit();
 });
 
 app.on("ready", function () {
@@ -24,18 +22,6 @@ app.on("ready", function () {
 
   mainWindow.on("closed", function () {
     mainWindow = null;
-  });
-});
-
-ipc.on("dialog.message", function (event, options) {
-  dialog.showMessageBox(mainWindow, options, function (button) {
-    event.sender.send("dialog.message.callback", button);
-  });
-});
-
-ipc.on("dialog.save", function (event, options) {
-  dialog.showSaveDialog(mainWindow, options, function (savePath) {
-    event.sender.send("dialog.save.callback", savePath);
   });
 });
 

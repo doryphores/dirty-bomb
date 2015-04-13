@@ -3,8 +3,7 @@ var React         = require("react"),
     TabBar        = require("./TabBar"),
     EditorStore   = require("../stores/EditorStore"),
     EditorActions = require("../actions/EditorActions"),
-    Immutable     = require("immutable"),
-    ipc           = require("ipc");
+    Dialogs       = require("../Dialogs");
 
 
 var EditorPanes = React.createClass({
@@ -62,7 +61,10 @@ var EditorPanes = React.createClass({
     if (file.get("clean")) {
       EditorActions.close(filePath);
     } else {
-      ipc.on("dialog.message.callback", function (button) {
+      Dialogs.confirm({
+        message: "'" + file.get("name") + "' has changes. Do you want to save the changes before closing?",
+        buttons: ["Save", "Cancel", "Don't save"]
+      }, function (button) {
         switch (button) {
           case 0:
             EditorActions.saveAndClose(filePath);
@@ -74,11 +76,6 @@ var EditorPanes = React.createClass({
             // no op
         }
       }.bind(this));
-      ipc.send("dialog.message", {
-        type: "warning",
-        buttons: ["Save", "Cancel", "Don't save"],
-        message: "'" + file.get("name") + "' has changed. Do you want to save the changes before closing?"
-      });
     }
   }
 });

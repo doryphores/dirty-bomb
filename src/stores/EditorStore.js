@@ -4,6 +4,7 @@ var fs            = require("fs-extra"),
     EventEmitter  = require("events").EventEmitter,
     PathWatcher   = require("pathwatcher"),
     Immutable     = require("immutable"),
+    shell         = require("shell"),
     AppDispatcher = require("../dispatcher/AppDispatcher");
 
 var _contentDir = path.resolve(__dirname, "../../repo/content");
@@ -126,18 +127,8 @@ function saveFile(filePath, close) {
 }
 
 function deleteFile(filePath) {
-  ipc.on("dialog.message.callback", function (button) {
-    if (button === 1) {
-      closeFile(filePath);
-      shell.moveItemToTrash(path.join(_contentDir, filePath));
-    }
-  });
-  ipc.send("dialog.message", {
-    type: "warning",
-    message: "Are you sure you want to delete this file?",
-    detail: "Your are deleting '" + filePath + "'.",
-    buttons: ["Cancel", "Move to trash"]
-  });
+  closeFile(filePath);
+  shell.moveItemToTrash(path.join(_contentDir, filePath));
 }
 
 var CHANGE_EVENT = "change";

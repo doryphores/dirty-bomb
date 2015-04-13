@@ -4,6 +4,7 @@ var React         = require("react"),
     TreeActions   = require("../actions/TreeActions"),
     EditorActions = require("../actions/EditorActions");
     path          = require("path"),
+    Dialogs       = require("../Dialogs"),
     remote        = require("remote"),
     Menu          = remote.require("menu");
 
@@ -155,14 +156,20 @@ Tree.Node = React.createClass({
       {
         label: "Delete",
         click: function () {
-          TreeActions.delete(nodePath);
+          Dialogs.confirm({
+            message: "Are you sure you want to delete the selected item?",
+            details: "Your are deleting '" + nodePath + "'.",
+            buttons: ["Cancel", "Move to trash"]
+          }, function (button) {
+            if (button === 1) TreeActions.delete(nodePath);
+          });
         }
       }
     ]);
 
     setTimeout(function () {
       menu.popup(remote.getCurrentWindow());
-    }, 50)
+    }, 100)
   },
 
   _isFile: function () {

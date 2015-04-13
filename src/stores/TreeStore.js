@@ -7,7 +7,7 @@ var fs            = require("fs-extra"),
     PathWatcher   = require("pathwatcher"),
     AppDispatcher = require("../dispatcher/AppDispatcher"),
     EditorActions = require("../actions/EditorActions"),
-    ipc           = require("ipc"),
+    Dialogs       = require("../Dialogs"),
     shell         = require("shell");
 
 
@@ -360,7 +360,10 @@ TreeStore.dispatchToken = AppDispatcher.register(function (action) {
       TreeStore.emitChange();
       break;
     case "tree_create":
-      ipc.on("dialog.save.callback", function (savedPath) {
+      Dialogs.promptForPath({
+        title: "New file",
+        defaultPath: absolute(action.savePath)
+      }, function (savedPath) {
         if (savedPath) {
           fs.outputFile(savedPath, "", function (err) {
             if (err) {
@@ -371,23 +374,9 @@ TreeStore.dispatchToken = AppDispatcher.register(function (action) {
           });
         }
       });
-      ipc.send("dialog.save", {
-        title: "Save file",
-        defaultPath: absolute(action.savePath)
-      });
       break;
     case "tree_delete":
-      ipc.on("dialog.message.callback", function (button) {
-        if (button === 1) {
-          shell.moveItemToTrash(absolute(action.nodePath));
-        }
-      });
-      ipc.send("dialog.message", {
-        type: "warning",
-        message: "Are you sure you want to delete the selected item?",
-        detail: "Your are deleting '" + action.nodePath + "'.",
-        buttons: ["Cancel", "Move to trash"]
-      });
+      shell.moveItemToTrash(absolute(action.nodePath));
       break;
     default:
       // no op
