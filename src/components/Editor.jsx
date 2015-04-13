@@ -16,7 +16,7 @@ var markdownExtensions = function (converter) {
     {
       type   : "lang",
       filter : function (md) {
-        return md.replace(/---[\s\S]*---/, "");
+        return md.replace(/---[\s\S]*?---/, "");
       }
     },
     {
