@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 export npm_config_disturl=https://atom.io/download/atom-shell
-export npm_config_target=0.22.3
-HOME=~/.atom-shell-gyp npm install
+export npm_config_target=0.24.0
+HOME=~/.electron-gyp npm install
 unset npm_config_disturl
 unset npm_config_target

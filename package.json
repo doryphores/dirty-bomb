@@ -10,33 +10,33 @@
     "url": "https://github.com/doryphores/dirty-bomb.git"
   },
   "scripts": {
-    "start": "atom-shell ."
+    "start": "electron ."
   },
   "main": "main.js",
   "dependencies": {
-    "classnames": "^1.2.0",
-    "codemirror": "^5.1.0",
+    "classnames": "^1.2.1",
+    "codemirror": "^5.2.0",
     "flux": "^2.0.1",
-    "fs-extra": "^0.18.0",
+    "fs-extra": "^0.18.2",
     "immutable": "^3.7.2",
-    "node-jsx": "^0.12.4",
+    "node-jsx": "^0.13.2",
     "object-assign": "^2.0.0",
     "pathwatcher": "^4.4.0",
-    "react": "^0.13.1",
-    "showdown": "^0.4.0",
+    "react": "^0.13.2",
+    "showdown": "^0.5.0",
     "stylus": "^0.50.0",
     "underscore": "^1.8.3"
   },
   "devDependencies": {
-    "atom-shell": "0.22.3",
     "chai": "^2.2.0",
     "mocha": "^2.2.4",
     "rewire": "^2.3.1",
     "sinon": "^1.14.1",
     "sinon-chai": "^2.7.0",
-    "temp": "^0.8.1"
+    "temp": "^0.8.1",
+    "electron-prebuilt": "^0.24.0"
   },
   "engines": {
-    "atom-shell": "0.22.3"
+    "electron": "0.24.0"
   }
 }

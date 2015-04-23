@@ -1,6 +1,6 @@
 # Dirty Bomb
 
-A custom markdown editor built on Atom Shell to manage a website's content.
+A custom markdown editor built on [Electron](https://github.com/atom/electron) to manage a website's content.
 
 ## Node requirements
 
@@ -22,7 +22,7 @@ $ nvm install
 
 ## Install dependencies
 
-Run the following to install Atom Shell and dependencies. The script ensures native modules are built for Atom Shell.
+Run the following to install Electron and dependencies. The script ensures native modules are built for Electron.
 
 ```bash
 $ ./scripts/install
@@ -30,7 +30,7 @@ $ ./scripts/install
 
 ## Starting the app
 
-THe previous step should have installed the Atom Shell binary so you can start the app by running the `npm start` script.
+THe previous step should have installed the Electron binary so you can start the app by running the `npm start` script.
 
 ```bash
 $ npm start
