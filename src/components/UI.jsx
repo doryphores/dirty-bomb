@@ -1,7 +1,8 @@
-var React       = require("react"),
-    ToolBar     = require("./ToolBar"),
-    Tree        = require("./Tree"),
-    EditorPanes = require("./EditorPanes");
+var React         = require("react"),
+    ToolBar       = require("./ToolBar"),
+    Tree          = require("./Tree"),
+    ImageSelector = require("./ImageSelector"),
+    EditorPanes   = require("./EditorPanes");
 
 exports.render = function () {
   React.render(
@@ -11,6 +12,7 @@ exports.render = function () {
         <ToolBar />
         <EditorPanes />
       </div>
+      <ImageSelector />
     </div>,
     document.querySelector("body")
   );

@@ -5,7 +5,9 @@ var React         = require("react"),
     CodeMirror    = require("codemirror"),
     classNames    = require("classnames"),
     Dialogs       = require("../Dialogs"),
-    EditorActions = require("../actions/EditorActions");
+    EditorActions = require("../actions/EditorActions"),
+    ImageStore    = require("../stores/ImageStore"),
+    ImageActions  = require("../actions/ImageActions");
 
 require("codemirror/mode/markdown/markdown");
 
@@ -82,7 +84,7 @@ var Editor = module.exports = React.createClass({
               <span className="button__label">Delete</span>
               <span className="button__icon icon-trashcan" />
             </button>
-            <button className="button">
+            <button className="button" onClick={this._selectImage}>
               <span className="button__label">Insert image</span>
               <span className="button__icon icon-device-camera" />
             </button>
@@ -118,5 +120,20 @@ var Editor = module.exports = React.createClass({
     }, function (button) {
       if (button === 1) EditorActions.delete(filePath);
     });
+  },
+
+  _selectImage: function () {
+    ImageActions.open(function (imagePath) {
+      var cursor = this.editor.getCursor();
+      this.editor.replaceRange("![Image description](" + imagePath + ")", cursor, cursor);
+      this.editor.setSelection({
+        line: cursor.line,
+        ch: cursor.ch + 2
+      }, {
+        line: cursor.line,
+        ch: cursor.ch + 19
+      });
+      this.editor.focus();
+    }.bind(this));
   }
 });

@@ -13,7 +13,15 @@ var Dialogs = {
 
   promptForPath: function (options, callback) {
     return remote.require("dialog").showSaveDialog(getCurrentWindow(), options, function (savePath) {
-      if (callback) callback(savePath);
+      callback(savePath);
+    });
+  },
+
+  promptForFile: function (options, callback) {
+    options.properties = ["openFile"];
+    return remote.require("dialog").showOpenDialog(getCurrentWindow(), options, function (filenames) {
+      if (filenames === undefined) callback();
+      else callback(filenames[0]);
     });
   }
 };
