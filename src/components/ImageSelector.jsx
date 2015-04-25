@@ -1,26 +1,12 @@
 var React         = require("react"),
     classNames    = require("classnames"),
-    ImageActions  = require("../actions/ImageActions"),
-    ImageStore    = require("../stores/ImageStore"),
-    EditorActions = require("../actions/EditorActions");
+    ImageActions  = require("../actions/ImageActions");
 
 var imageRoot = path.resolve(__dirname, "../../repo/public/media");
 
 var ImageSelector = React.createClass({
-  getInitialState: function () {
-    return ImageStore.getState();
-  },
-
-  componentDidMount: function() {
-    ImageStore.addChangeListener(this._onChange);
-  },
-
-  componentWillUnmount: function() {
-    ImageStore.removeChangeListener(this._onChange);
-  },
-
   render: function() {
-    var images = this.state.images.map(function (image) {
+    var images = this.props.images.map(function (image) {
       return (
         <li key={image.path}
             className="image-list__item"
@@ -30,9 +16,13 @@ var ImageSelector = React.createClass({
       );
     }.bind(this));
 
-    var classes = classNames("image-selector", "panel-container vertical", {
-      "image-selector--is-open": this.state.open
-    });
+    var classes = classNames(
+      "image-selector",
+      "panel-container vertical",
+      {
+        "image-selector--is-open": this.props.open
+      }
+    );
 
     return (
       <div className={classes}>
@@ -51,10 +41,6 @@ var ImageSelector = React.createClass({
         </ul>
       </div>
     );
-  },
-
-  _onChange: function () {
-    this.setState(ImageStore.getState());
   },
 
   _onAdd: function () {

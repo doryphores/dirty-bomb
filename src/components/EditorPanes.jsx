@@ -7,24 +7,12 @@ var React         = require("react"),
 
 
 var EditorPanes = React.createClass({
-  getInitialState: function() {
-    return { files: EditorStore.getFiles() };
-  },
-
   shouldComponentUpdate: function(nextProps, nextState) {
-    return this.state.files !== nextState.files;
-  },
-
-  componentDidMount: function() {
-    EditorStore.addChangeListener(this._onChange);
-  },
-
-  componentWillUnmout: function() {
-    EditorStore.removeChangeListener(this._onChange);
+    return this.props !== nextProps;
   },
 
   render: function() {
-    var editors = this.state.files.map(function (file) {
+    var editors = this.props.files.map(function (file) {
       return (
         <Editor
           key={file.get("path")}
@@ -38,7 +26,7 @@ var EditorPanes = React.createClass({
     return (
       <div className="panel-container vertical">
         <TabBar
-          files={this.state.files}
+          files={this.props.files}
           onChangeFocus={this._onChangeFocus}
           onClose={this._onClose} />
         <div className="editor-panes">
@@ -46,10 +34,6 @@ var EditorPanes = React.createClass({
         </div>
       </div>
     );
-  },
-
-  _onChange: function () {
-    this.setState({ files: EditorStore.getFiles() });
   },
 
   _onChangeFocus: function (filePath) {

@@ -1,6 +1,5 @@
 var React         = require("react"),
     classNames    = require("classnames"),
-    TreeStore     = require("../stores/TreeStore"),
     TreeActions   = require("../actions/TreeActions"),
     EditorActions = require("../actions/EditorActions");
     path          = require("path"),
@@ -14,23 +13,16 @@ var React         = require("react"),
 \*=============================================*/
 
 var Tree = module.exports = React.createClass({
-  getInitialState: function () {
-    return {
-      rootNode: TreeStore.getNode(".")
-    };
-  },
-
   componentDidMount: function () {
-    TreeStore.addChangeListener(this._onChange);
     TreeActions.init(".");
   },
 
-  componentWillUnmount: function () {
-    TreeStore.removeChangeListener(this._onChange);
+  shouldComponentUpdate: function(nextProps, nextState) {
+    return nextProps !== this.props;
   },
 
   render: function () {
-    if (!this.state.rootNode) return null;
+    if (!this.props.rootNode) return null;
 
     return (
       <div className="tree">
@@ -38,7 +30,7 @@ var Tree = module.exports = React.createClass({
           <ul className="tree__node-list tree__node-list--is-root">
             <Tree.Node
               key="root"
-              node={this.state.rootNode} />
+              node={this.props.rootNode} />
           </ul>
         </div>
         <div
@@ -46,12 +38,6 @@ var Tree = module.exports = React.createClass({
           onMouseDown={this._startResize} />
       </div>
     );
-  },
-
-  _onChange: function () {
-    this.setState({
-      rootNode: TreeStore.getNode(".")
-    });
   },
 
   _startResize: function () {

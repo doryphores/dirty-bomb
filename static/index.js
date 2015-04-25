@@ -3,11 +3,12 @@ require("node-jsx").install({extension: ".jsx"});
 var fs     = require("fs"),
     path   = require("path"),
     stylus = require("stylus"),
-    UI     = require("../src/components/UI");
+    React  = require("react"),
+    App    = require("../src/components/App");
 
 window.onload = function () {
   compileCSS(function () {
-    UI.render();
+    React.render(React.createElement(App), document.body);
   });
 };
 
