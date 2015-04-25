@@ -64,7 +64,7 @@ function close() {
 }
 
 function selectImage(imagePath) {
-  _callback("/media/" + imagePath);
+  _.defer(_callback, "/media/" + imagePath);
   close();
 }
 
@@ -96,6 +96,7 @@ ImageStore.dispatchToken = AppDispatcher.register(function (action) {
       open(action.callback);
       break;
     case "images_close":
+      _.defer(_callback);
       close();
       break;
     case "images_add":

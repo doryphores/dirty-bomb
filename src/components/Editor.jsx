@@ -48,7 +48,7 @@ var Editor = module.exports = React.createClass({
       value        : this.props.file.get("content")
     });
 
-    this.editor.on("change", _.debounce(this._onChange, 200));
+    this.editor.on("change", this._onChange);
 
     this.editor.focus();
   },
