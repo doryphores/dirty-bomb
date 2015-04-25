@@ -7,7 +7,10 @@ var React           = require("react"),
     Dialogs         = require("../Dialogs"),
     EditorActions   = require("../actions/EditorActions"),
     ImageStore      = require("../stores/ImageStore"),
-    ImageActions    = require("../actions/ImageActions");
+    ImageActions    = require("../actions/ImageActions"),
+    remote          = require("remote"),
+    Menu            = remote.require("menu"),
+    clipboard       = require("clipboard");
 
 require("codemirror/mode/markdown/markdown");
 
@@ -48,6 +51,22 @@ var Editor = module.exports = React.createClass({
       value        : this.props.file.get("content")
     });
 
+    // We need to override the copy/paste operation keyboard
+    // shortcuts to work with the context menu
+    if (process.platform != 'darwin') {
+      this.editor.setOption("extraKeys", {
+        "Cmd-C": this._copy,
+        "Cmd-V": this._paste,
+        "Cmd-X": this._cut
+      });
+    } else {
+      this.editor.setOption("extraKeys", {
+        "Ctrl-C": this._copy,
+        "Ctrl-V": this._paste,
+        "Ctrl-X": this._cut
+      });
+    }
+
     this.editor.on("change", this._onChange);
 
     this.editor.focus();
@@ -87,7 +106,7 @@ var Editor = module.exports = React.createClass({
               <span className="button__icon icon-device-camera" />
             </button>
           </div>
-          <div className="cm-container" ref="editor" />
+          <div className="cm-container" ref="editor" onContextMenu={this._showContextMenu} />
         </div>
         <div className="preview" dangerouslySetInnerHTML={{__html: previewHTML}} />
       </div>
@@ -102,6 +121,61 @@ var Editor = module.exports = React.createClass({
 
   _onChange: function () {
     EditorActions.change(this.props.file.get("path"), this.editor.getValue());
+  },
+
+  _showContextMenu: function () {
+    var menu = this.menu || Menu.buildFromTemplate([
+      {
+        label: "Undo",
+        click: function () {
+          this.editor.undo();
+        }.bind(this)
+      },
+      {
+        label: "Redo",
+        click: function () {
+          this.editor.redo();
+        }.bind(this)
+      },
+      {
+        type: "separator"
+      },
+      {
+        label: "Cut",
+        click: this._cut
+      },
+      {
+        label: "Copy",
+        click: this._copy
+      },
+      {
+        label: "Paste",
+        click: this._paste
+      },
+      {
+        type: "separator"
+      },
+      {
+        label: "Insert image",
+        click: function () {
+          this._selectImage();
+        }.bind(this)
+      }
+    ]);
+    menu.popup(remote.getCurrentWindow());
+  },
+
+  _cut: function () {
+    clipboard.writeText(this.editor.getSelection());
+    this.editor.replaceSelection("");
+  },
+
+  _copy: function () {
+    clipboard.writeText(this.editor.getSelection());
+  },
+
+  _paste: function () {
+    this.editor.replaceSelection(clipboard.readText());
   },
 
   _onSave: function () {
