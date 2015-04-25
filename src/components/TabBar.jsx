@@ -1,7 +1,10 @@
-var React      = require("react"),
-    classNames = require("classnames");
+var React           = require("react"),
+    PureRenderMixin = require("react/addons").addons.PureRenderMixin,
+    classNames      = require("classnames");
 
 var TabBar = React.createClass({
+  mixins: [PureRenderMixin],
+
   render: function() {
     if (this.props.files.size === 0) return null;
 

@@ -1,15 +1,14 @@
-var React         = require("react"),
-    Editor        = require("./Editor"),
-    TabBar        = require("./TabBar"),
-    EditorStore   = require("../stores/EditorStore"),
-    EditorActions = require("../actions/EditorActions"),
-    Dialogs       = require("../Dialogs");
+var React           = require("react"),
+    PureRenderMixin = require("react/addons").addons.PureRenderMixin,
+    Editor          = require("./Editor"),
+    TabBar          = require("./TabBar"),
+    EditorStore     = require("../stores/EditorStore"),
+    EditorActions   = require("../actions/EditorActions"),
+    Dialogs         = require("../Dialogs");
 
 
 var EditorPanes = React.createClass({
-  shouldComponentUpdate: function(nextProps, nextState) {
-    return this.props !== nextProps;
-  },
+  mixins: [PureRenderMixin],
 
   render: function() {
     var editors = this.props.files.map(function (file) {

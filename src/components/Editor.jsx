@@ -1,13 +1,13 @@
-var React         = require("react"),
-    Showdown      = require("showdown"),
-    path          = require("path"),
-    _             = require("underscore"),
-    CodeMirror    = require("codemirror"),
-    classNames    = require("classnames"),
-    Dialogs       = require("../Dialogs"),
-    EditorActions = require("../actions/EditorActions"),
-    ImageStore    = require("../stores/ImageStore"),
-    ImageActions  = require("../actions/ImageActions");
+var React           = require("react"),
+    PureRenderMixin = require("react/addons").addons.PureRenderMixin,
+    Showdown        = require("showdown"),
+    path            = require("path"),
+    CodeMirror      = require("codemirror"),
+    classNames      = require("classnames"),
+    Dialogs         = require("../Dialogs"),
+    EditorActions   = require("../actions/EditorActions"),
+    ImageStore      = require("../stores/ImageStore"),
+    ImageActions    = require("../actions/ImageActions");
 
 require("codemirror/mode/markdown/markdown");
 
@@ -38,6 +38,8 @@ var converter = new Showdown.converter({extensions: [markdownExtensions]});
 
 
 var Editor = module.exports = React.createClass({
+  mixins: [PureRenderMixin],
+
   componentDidMount: function () {
     this.editor = CodeMirror(this.refs.editor.getDOMNode(), {
       mode         : "markdown",
@@ -64,10 +66,6 @@ var Editor = module.exports = React.createClass({
     if (this.props.file.get("clean") && this.props.file.get("content") !== this.editor.getValue()) {
       this.editor.setValue(this.props.file.get("content"));
     }
-  },
-
-  shouldComponentUpdate: function(nextProps, nextState) {
-    return this.props.file !== nextProps.file;
   },
 
   render: function () {

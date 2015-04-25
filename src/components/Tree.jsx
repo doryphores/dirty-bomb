@@ -1,11 +1,12 @@
-var React         = require("react"),
-    classNames    = require("classnames"),
-    TreeActions   = require("../actions/TreeActions"),
-    EditorActions = require("../actions/EditorActions");
-    path          = require("path"),
-    Dialogs       = require("../Dialogs"),
-    remote        = require("remote"),
-    Menu          = remote.require("menu");
+var React           = require("react"),
+    PureRenderMixin = require("react/addons").addons.PureRenderMixin,
+    classNames      = require("classnames"),
+    TreeActions     = require("../actions/TreeActions"),
+    EditorActions   = require("../actions/EditorActions");
+    path            = require("path"),
+    Dialogs         = require("../Dialogs"),
+    remote          = require("remote"),
+    Menu            = remote.require("menu");
 
 
 /*=============================================*\
@@ -13,12 +14,10 @@ var React         = require("react"),
 \*=============================================*/
 
 var Tree = module.exports = React.createClass({
+  mixins: [PureRenderMixin],
+
   componentDidMount: function () {
     TreeActions.init(".");
-  },
-
-  shouldComponentUpdate: function(nextProps, nextState) {
-    return nextProps !== this.props;
   },
 
   render: function () {
@@ -59,9 +58,7 @@ var Tree = module.exports = React.createClass({
 
 
 Tree.Node = React.createClass({
-  shouldComponentUpdate: function(nextProps, nextState) {
-    return this.props.node !== nextProps.node;
-  },
+  mixins: [PureRenderMixin],
 
   render: function () {
     var nodeClasses = classNames("tree__node", {
