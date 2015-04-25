@@ -122,15 +122,17 @@ var Editor = module.exports = React.createClass({
 
   _selectImage: function () {
     ImageActions.open(function (imagePath) {
-      var cursor = this.editor.getCursor();
-      this.editor.replaceRange("![Image description](" + imagePath + ")", cursor, cursor);
-      this.editor.setSelection({
-        line: cursor.line,
-        ch: cursor.ch + 2
-      }, {
-        line: cursor.line,
-        ch: cursor.ch + 19
-      });
+      if (imagePath) {
+        var cursor = this.editor.getCursor();
+        this.editor.replaceRange("![Image description](" + imagePath + ")", cursor, cursor);
+        this.editor.setSelection({
+          line: cursor.line,
+          ch: cursor.ch + 2
+        }, {
+          line: cursor.line,
+          ch: cursor.ch + 19
+        });
+      }
       this.editor.focus();
     }.bind(this));
   }
