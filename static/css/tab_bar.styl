@@ -1,7 +1,7 @@
 .tab-bar
-  display -webkit-flex
-  -webkit-flex-direction row
-  -webkit-flex 0 0 auto
+  display flex
+  flex-direction row
+  flex 0 0 auto
   border-bottom 5px solid #d2d2d2
   list-style none
   font-size 12px
@@ -14,7 +14,7 @@
 .tab-bar__item
   position relative
   display inline-block
-  -webkit-flex 1
+  flex 1
   width -webkit-min-content
   max-width 160px
   min-width 60px
@@ -33,7 +33,7 @@
     background #2c2c2c
 
 .tab-bar__item--is-focused
-  -webkit-flex 2
+  flex 2
   background #d2d2d2
   color #2c2c2c
   -webkit-font-smoothing antialiased
