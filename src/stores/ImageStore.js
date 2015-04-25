@@ -120,4 +120,7 @@ ImageStore.dispatchToken = AppDispatcher.register(function (action) {
   }
 });
 
+// Preload images
+load();
+
 module.exports = ImageStore;
