@@ -41,6 +41,7 @@ var Tree = module.exports = React.createClass({
   },
 
   _startResize: function () {
+    document.body.classList.add("is-resizing");
     document.addEventListener("mouseup", this._endResize);
     document.addEventListener("mousemove", this._resize);
   },
@@ -50,6 +51,7 @@ var Tree = module.exports = React.createClass({
   },
 
   _endResize: function () {
+    document.body.classList.remove("is-resizing");
     document.removeEventListener("mousemove", this._resize);
     document.removeEventListener("mouseup", this._endResize);
   }
