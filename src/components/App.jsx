@@ -2,9 +2,10 @@ var React         = require("react"),
     ToolBar       = require("./ToolBar"),
     Tree          = require("./Tree"),
     ImageSelector = require("./ImageSelector"),
+    SetupPanel    = require("./SetupPanel"),
     EditorPanes   = require("./EditorPanes"),
     TreeStore     = require("../stores/TreeStore"),
-    EditorStore   = require("../stores/EditorStore")
+    EditorStore   = require("../stores/EditorStore"),
     ImageStore    = require("../stores/ImageStore");
 
 function getAppState() {
@@ -44,6 +45,7 @@ var App = React.createClass({
         <ImageSelector
           open={this.state.imageSelectorOpen}
           images={this.state.images} />
+        <SetupPanel />
       </div>
     );
   },

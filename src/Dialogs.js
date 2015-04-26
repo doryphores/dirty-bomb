@@ -23,6 +23,14 @@ var Dialogs = {
       if (filenames === undefined) callback();
       else callback(filenames[0]);
     });
+  },
+
+  promptForDirectory: function (options, callback) {
+    options.properties = ["openDirectory"];
+    return remote.require("dialog").showOpenDialog(getCurrentWindow(), options, function (filenames) {
+      if (filenames === undefined) callback();
+      else callback(filenames[0]);
+    });
   }
 };
 

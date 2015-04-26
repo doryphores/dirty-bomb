@@ -17,10 +17,10 @@ var ImageSelector = React.createClass({
     }.bind(this));
 
     var classes = classNames(
-      "image-selector",
+      "overlay",
       "panel-container vertical",
       {
-        "image-selector--is-open": this.props.open
+        "overlay--is-open": this.props.open
       }
     );
 
