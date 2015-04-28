@@ -27,7 +27,7 @@
     "showdown": "^0.5.0",
     "stylus": "^0.50.0",
     "underscore": "^1.8.3",
-    "nodegit": "^0.3.3",
+    "nodegit": "https://github.com/nodegit/nodegit/archive/master.tar.gz",
     "github": "^0.2.4",
     "node-forge": "^0.6.26",
     "promisify-node": "^0.1.5"

@@ -1,15 +1,15 @@
-var app          = require("remote").require("app"),
-    fs           = require("fs-extra"),
-    path         = require("path"),
-    _            = require("underscore"),
-    GithubAPI    = require("github");
+var app           = require("remote").require("app"),
+    fs            = require("fs-extra"),
+    path          = require("path"),
+    _             = require("underscore"),
+    SettingsStore = require("../stores/SettingsStore"),
+    GithubAPI     = require("github");
 
 var githubAPI = new GithubAPI({version: "3.0.0"});
 
 // Private variables
-var _keyDir         = path.resolve(app.getPath("userData"), "keys");
-var _privateKeyPath = path.join(_keyDir, "id_rsa");
-var _publicKeyPath  = path.join(_keyDir, "id_rsa.pub");
+var _privateKeyPath = SettingsStore.get("privateKeyPath");
+var _publicKeyPath  = SettingsStore.get("publicKeyPath");
 
 /**
  * Sets up basic authentication for the next Github API call
@@ -98,7 +98,7 @@ function _generateKeyPair(done) {
     var publicKey  = forge.ssh.publicKeyToOpenSSH(keypair.publicKey);
 
     // Write keys to disk
-    fs.ensureDir(_keyDir, function (err) {
+    fs.ensureDir(path.dirname(_publicKeyPath), function (err) {
       console.log("WRITING KEYS TO DISK");
       if (err) return done(err);
 

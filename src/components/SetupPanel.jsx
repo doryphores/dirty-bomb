@@ -3,7 +3,9 @@ var React         = require("react"),
     Dialogs       = require("../Dialogs"),
     path          = require("path"),
     SettingsStore = require("../stores/SettingsStore"),
-    SetupActions  = require("../actions/SetupActions");
+    RepoStore     = require("../stores/RepoStore"),
+    SetupActions  = require("../actions/SetupActions"),
+    ProgressBar   = require("./ProgressBar");
 
 
 function getState() {
@@ -21,10 +23,12 @@ var SetupPanel = React.createClass({
 
   componentDidMount: function() {
     SettingsStore.addChangeListener(this._onChange);
+    RepoStore.addProgressListener(this._onProgress);
   },
 
   componentWillUnmount: function() {
     SettingsStore.removeChangeListener(this._onChange);
+    RepoStore.removeProgressListener(this._onProgress);
   },
 
   render: function () {
@@ -39,13 +43,13 @@ var SetupPanel = React.createClass({
           <div>
             <label>
               Your GitHub email address
-              <input type="email" value="martin.laine@gmail.com" required ref="email" />
+              <input type="email" required ref="email" />
             </label>
           </div>
           <div>
             <label>
               Your GitHub password
-              <input type="password" value="o9@GQkt8%HFJKvgf" required ref="password" />
+              <input type="password" required ref="password" />
             </label>
           </div>
           <div>
@@ -64,7 +68,7 @@ var SetupPanel = React.createClass({
           <div>
             <label>
               Choose a location for the repository
-              <input type="text" readOnly value={this.state.repoPath} onClick={this._selectRepoLocation} />
+              <input type="text" ref="repoPath" required readOnly value={this.state.repoPath} onClick={this._selectRepoLocation} />
             </label>
           </div>
           <div>
@@ -74,12 +78,19 @@ var SetupPanel = React.createClass({
             </button>
           </div>
         </form>
+        <div className={this.state.progress > 0 ? "is-active" : ""}>
+          <ProgressBar progress={this.state.progress} />
+        </div>
       </div>
     );
   },
 
   _onChange: function () {
     this.setState(getState());
+  },
+
+  _onProgress: function (progress) {
+    this.setState({progress: progress});
   },
 
   _authenticate: function (e) {
@@ -92,6 +103,7 @@ var SetupPanel = React.createClass({
 
   _setup: function (e) {
     e.preventDefault();
+    SetupActions.setupRepo(this.state.repoPath);
   },
 
   _selectRepoLocation: function () {
