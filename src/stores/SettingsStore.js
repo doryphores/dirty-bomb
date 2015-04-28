@@ -44,12 +44,8 @@ function setRepoPath(repoPath) {
   SettingsStore.emitChange();
 }
 
-function setUser(name, email) {
-  _settings = _settings.update("user", function (user) {
-    return user
-      .set("name", name)
-      .set("email", email);
-  });
+function setUser(user) {
+  _settings = _settings.set("user", Immutable.Map(user));
   saveToDisk();
   SettingsStore.emitChange();
 }
@@ -94,7 +90,7 @@ SettingsStore.dispatchToken = AppDispatcher.register(function (action) {
       setRepoPath(action.repoPath);
       break;
     case "setup_authenticated":
-      setUser(action.name, action.email);
+      setUser(action.user);
       break;
     default:
       // no op

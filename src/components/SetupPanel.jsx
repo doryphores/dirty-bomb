@@ -3,8 +3,7 @@ var React         = require("react"),
     Dialogs       = require("../Dialogs"),
     path          = require("path"),
     SettingsStore = require("../stores/SettingsStore"),
-    SetupActions  = require("../actions/SetupActions"),
-    github        = require("../github");
+    SetupActions  = require("../actions/SetupActions");
 
 
 function getState() {
@@ -40,13 +39,13 @@ var SetupPanel = React.createClass({
           <div>
             <label>
               Your GitHub email address
-              <input type="email" required ref="email" />
+              <input type="email" value="martin.laine@gmail.com" required ref="email" />
             </label>
           </div>
           <div>
             <label>
               Your GitHub password
-              <input type="password" required ref="password" />
+              <input type="password" value="o9@GQkt8%HFJKvgf" required ref="password" />
             </label>
           </div>
           <div>
@@ -85,7 +84,7 @@ var SetupPanel = React.createClass({
 
   _authenticate: function (e) {
     e.preventDefault();
-    github.setup(
+    SetupActions.setupGithub(
       React.findDOMNode(this.refs.email).value,
       React.findDOMNode(this.refs.password).value
     );
