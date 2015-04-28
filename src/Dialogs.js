@@ -26,7 +26,7 @@ var Dialogs = {
   },
 
   promptForDirectory: function (options, callback) {
-    options.properties = ["openDirectory"];
+    options.properties = ["createDirectory", "openDirectory"];
     return remote.require("dialog").showOpenDialog(getCurrentWindow(), options, function (filenames) {
       if (filenames === undefined) callback();
       else callback(filenames[0]);

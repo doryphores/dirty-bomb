@@ -1,60 +1,75 @@
-var React   = require("react"),
-    app     = require("remote").require("app"),
-    Dialogs = require("../Dialogs"),
-    path    = require("path");
+var React         = require("react"),
+    app           = require("remote").require("app"),
+    Dialogs       = require("../Dialogs"),
+    path          = require("path"),
+    SettingsStore = require("../stores/SettingsStore"),
+    SetupActions  = require("../actions/SetupActions"),
+    github        = require("../github");
+
+
+function getState() {
+  var currentStep = SettingsStore.getUser() ? "repo" : "github";
+  return {
+    settings: SettingsStore.getSettings(),
+    currentStep: currentStep
+  };
+}
 
 var SetupPanel = React.createClass({
   getInitialState: function () {
-    return {
-      currentStep: "github",
-      repoPath: path.join(app.getPath("home"), "DirtyBomb")
-    }
+    return getState();
+  },
+
+  componentDidMount: function() {
+    SettingsStore.addChangeListener(this._onChange);
+  },
+
+  componentWillUnmount: function() {
+    SettingsStore.removeChangeListener(this._onChange);
   },
 
   render: function () {
     return (
       <div className="setup-panel overlay overlay--is-open">
-        <form className={this.state.currentStep === "github" ? "is-active" : ""}>
+        <form
+          className={this.state.currentStep === "github" ? "is-active" : ""}
+          onSubmit={this._authenticate}>
           <h2 className="icon-octoface">
             Connect to GitHub
           </h2>
-
           <div>
             <label>
-              Your GitHub username
-              <input type="text" />
+              Your GitHub email address
+              <input type="email" required ref="email" />
             </label>
           </div>
-
           <div>
             <label>
               Your GitHub password
-              <input type="password" />
+              <input type="password" required ref="password" />
             </label>
           </div>
-
           <div>
-            <button className="button" onClick={this._authenticate}>
+            <button className="button">
               <span className="button__label">Login</span>
               <span className="button__icon icon-key" />
             </button>
           </div>
         </form>
-
-        <form className={this.state.currentStep === "repo" ? "is-active" : ""}>
+        <form
+          className={this.state.currentStep === "repo" ? "is-active" : ""}
+          onSubmit={this._setup}>
           <h2 className="icon-repo">
             Setup repository
           </h2>
-
           <div>
             <label>
               Choose a location for the repository
               <input type="text" readOnly value={this.state.repoPath} onClick={this._selectRepoLocation} />
             </label>
           </div>
-
           <div>
-            <button className="button" onClick={this._setup}>
+            <button className="button">
               <span className="button__label">Download</span>
               <span className="button__icon icon-cloud-download" />
             </button>
@@ -64,9 +79,16 @@ var SetupPanel = React.createClass({
     );
   },
 
+  _onChange: function () {
+    this.setState(getState());
+  },
+
   _authenticate: function (e) {
     e.preventDefault();
-    this.setState({currentStep: "repo"});
+    github.setup(
+      React.findDOMNode(this.refs.email).value,
+      React.findDOMNode(this.refs.password).value
+    );
   },
 
   _setup: function (e) {

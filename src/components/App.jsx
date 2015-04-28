@@ -6,7 +6,9 @@ var React         = require("react"),
     EditorPanes   = require("./EditorPanes"),
     TreeStore     = require("../stores/TreeStore"),
     EditorStore   = require("../stores/EditorStore"),
-    ImageStore    = require("../stores/ImageStore");
+    ImageStore    = require("../stores/ImageStore"),
+    SettingsStore = require("../stores/SettingsStore"),
+    AppActions    = require("../actions/AppActions");
 
 function getAppState() {
   return {
@@ -14,6 +16,7 @@ function getAppState() {
     files: EditorStore.getFiles(),
     imageSelectorOpen: ImageStore.getState().open,
     images: ImageStore.getState().images,
+    settings: SettingsStore.getSettings()
   };
 }
 
@@ -23,18 +26,24 @@ var App = React.createClass({
   },
 
   componentDidMount: function() {
+    SettingsStore.addChangeListener(this._onChange);
     TreeStore.addChangeListener(this._onChange);
     EditorStore.addChangeListener(this._onChange);
     ImageStore.addChangeListener(this._onChange);
+    AppActions.init();
   },
 
   componentWillUnmount: function() {
+    SettingsStore.removeChangeListener(this._onChange);
     TreeStore.removeChangeListener(this._onChange);
     EditorStore.removeChangeListener(this._onChange);
     ImageStore.removeChangeListener(this._onChange);
   },
 
   render: function () {
+    if (!SettingsStore.isReady()) {
+      return null;
+    }
     return (
       <div className="panel-container horizontal">
         <Tree rootNode={this.state.treeRootNode} />
@@ -45,7 +54,7 @@ var App = React.createClass({
         <ImageSelector
           open={this.state.imageSelectorOpen}
           images={this.state.images} />
-        <SetupPanel />
+        <SetupPanel settings={this.state.settings} />
       </div>
     );
   },
