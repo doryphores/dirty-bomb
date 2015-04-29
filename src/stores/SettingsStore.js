@@ -60,6 +60,13 @@ var SettingsStore = assign({}, EventEmitter.prototype, {
     return _ready;
   },
 
+  isGithubReady: function () {
+    var user = this.getUser();
+    return user.get("name") && user.get("email") &&
+      fs.existsSync(this.get("publicKeyPath")) &&
+      fs.existsSync(this.get("privateKeyPath"));
+  },
+
   getSettings: function () {
     return _settings;
   },

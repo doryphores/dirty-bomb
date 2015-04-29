@@ -1,4 +1,4 @@
-.setup-panel
+.setup__screen
   display flex
   align-items center
   justify-content center
@@ -6,13 +6,13 @@
   background #808080
   color #f2f2f2
 
-  form
-    display none
-    width 300px
-    height 300px
+.setup__panel
+  width 300px
+  min-height 300px
 
-    &.is-active
-      display block
+.setup__form
+  .setup__panel--in-progress &
+    display none
 
   h2
     padding-bottom 5px
@@ -45,3 +45,11 @@
     background #f2f2f2
     color #535353
     outline none
+
+.setup__progress-indicator
+  display none
+  margin-top 30%
+  text-align center
+
+  .setup__panel--in-progress &
+    display block
