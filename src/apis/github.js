@@ -1,4 +1,5 @@
 var app           = require("remote").require("app"),
+    os            = require("os"),
     fs            = require("fs-extra"),
     path          = require("path"),
     _             = require("underscore"),
@@ -120,7 +121,7 @@ function _generateKeyPair(done) {
 function _sendKeyToGithub(publicKey, done) {
   console.log("SENDING KEYS TO GITHUB");
   githubAPI.user.createKey({
-    title : "Dirty bomb key",
+    title : "Dirty Bomb - (" + os.platform() + " - " + os.hostname() + ")",
     key   : publicKey
   }, function (err) {
     console.log("KEYS SENT TO GITHUB");
