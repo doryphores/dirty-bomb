@@ -33,8 +33,7 @@ function setupRepo(done) {
         );
       },
       transferProgress: function (stats) {
-        var progress = (stats.receivedObjects() + (stats.indexedObjects() || 0)) / stats.totalObjects() * 200;
-        console.log("PROGRESS", progress);
+        var progress = (stats.receivedObjects() + (stats.indexedObjects() || 0)) / stats.totalObjects() * 50;
         RepoStore.emitProgress(Math.round(progress));
       }
     }
