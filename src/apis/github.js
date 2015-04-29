@@ -37,45 +37,44 @@ function _authenticate(email, password, operation) {
  * @param {Function} done     Callback
  */
 function _setup(email, password, done) {
-  console.log("SETUP KEY");
-  fs.readFile(_publicKeyPath, {
-    encoding: "utf8"
-  }, function (_err, publicKey) {
-    if (publicKey) {
-      console.log("A KEY ALREADY EXISTS");
-      _authenticate(email, password, function () {
-        githubAPI.user.getKeys({}, function (err, keys) {
-          if (err) return done(err);
-          if (_.findWhere(keys, {key: publicKey.trim()})) {
-            console.log("AND GITHUB KNOWS ABOUT IT");
-            _authenticate(email, password, function () {
-              _getUserName(done);
+  _authenticate(email, password, function () {
+    _getUserName(function (err, name) {
+      if (err) return done(err);
+      console.log("SETUP KEY");
+      fs.readFile(_publicKeyPath, {
+        encoding: "utf8"
+      }, function (_err, publicKey) {
+        if (publicKey) {
+          console.log("A KEY ALREADY EXISTS");
+          _authenticate(email, password, function () {
+            githubAPI.user.getKeys({}, function (err, keys) {
+              if (err) return done(err);
+              if (_.findWhere(keys, {key: publicKey.trim()})) {
+                console.log("AND GITHUB KNOWS ABOUT IT");
+                done(null, name);
+              } else {
+                _authenticate(email, password, function () {
+                  _sendKeyToGithub(publicKey, function (err) {
+                    if (err) return done(err);
+                    done(null, name);
+                  });
+                });
+              }
             });
-          } else {
+          });
+        } else {
+          _generateKeyPair(function (err, publicKey) {
+            if (err) return done(err);
             _authenticate(email, password, function () {
               _sendKeyToGithub(publicKey, function (err) {
                 if (err) return done(err);
-                _authenticate(email, password, function () {
-                  _getUserName(done);
-                });
+                done(null, name);
               });
             });
-          }
-        });
-      });
-    } else {
-      _generateKeyPair(function (err, publicKey) {
-        if (err) return done(err);
-        _authenticate(email, password, function () {
-          _sendKeyToGithub(publicKey, function (err) {
-            if (err) return done(err);
-            _authenticate(email, password, function () {
-              _getUserName(done);
-            });
           });
-        });
+        }
       });
-    }
+    });
   });
 }
 
