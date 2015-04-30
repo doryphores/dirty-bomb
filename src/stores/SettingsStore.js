@@ -9,9 +9,8 @@ var fs            = require("fs-extra"),
 var _settingsPath = path.join(app.getPath("userData"), "settings.json");
 var _keyPath      = path.resolve(app.getPath("userData"), "keys");
 
-var _ready = false;
-
 var _settings = Immutable.fromJS({
+  repositoryURL: "git@github.com:simplybusiness/seedy.git",
   contentPath: "content",
   mediaPath: path.join("public", "media"),
   publicKeyPath: path.join(_keyPath, "id_rsa.pub"),
@@ -22,17 +21,13 @@ var _settings = Immutable.fromJS({
   }
 });
 
-function init() {
-  try {
-    var savedSettings = fs.readJsonSync(_settingsPath);
-    _settings = _settings.update("userSettings", function (userSettings) {
-      return userSettings.merge(savedSettings);
-    });
-  } catch(err) {
-    saveToDisk();
-  }
-  _ready = true;
-  SettingsStore.emitChange();
+try {
+  var savedSettings = fs.readJsonSync(_settingsPath);
+  _settings = _settings.update("userSettings", function (userSettings) {
+    return userSettings.merge(savedSettings);
+  });
+} catch(err) {
+  saveToDisk();
 }
 
 function saveToDisk() {
@@ -57,10 +52,6 @@ var CHANGE_EVENT = "change";
 
 var SettingsStore = assign({}, EventEmitter.prototype, {
   isReady: function () {
-    return _ready;
-  },
-
-  isGithubReady: function () {
     var user = this.getUser();
     return user.get("name") && user.get("email") &&
       fs.existsSync(this.get("publicKeyPath")) &&
@@ -76,17 +67,24 @@ var SettingsStore = assign({}, EventEmitter.prototype, {
   },
 
   getContentPath: function () {
-    return path.join(
-      this.get("userSettings.repoPath"),
-      this.get("contentPath")
-    );
+    var repoPath = this.get("userSettings.repoPath");
+    if (repoPath) {
+      return path.join(
+        repoPath,
+        this.get("contentPath")
+      );
+    } else {
+      return undefined;
+    }
   },
 
   getMediaPath: function () {
-    return path.join(
-      this.get("userSettings.repoPath"),
-      this.get("mediaPath")
-    );
+    var repoPath = this.get("userSettings.repoPath");
+    if (repoPath) {
+      return path.join(repoPath, this.get("mediaPath"));
+    } else {
+      return undefined;
+    }
   },
 
   getUser: function () {
@@ -108,9 +106,6 @@ var SettingsStore = assign({}, EventEmitter.prototype, {
 
 SettingsStore.dispatchToken = AppDispatcher.register(function (action) {
   switch(action.actionType) {
-    case "app_init":
-      init();
-      break;
     case "setup_repo":
       setRepoPath(action.repoPath);
       break;

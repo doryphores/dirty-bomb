@@ -6,33 +6,40 @@ var React           = require("react"),
     classNames      = require("classnames"),
     Dialogs         = require("../Dialogs"),
     EditorActions   = require("../actions/EditorActions"),
-    ImageStore      = require("../stores/ImageStore"),
     ImageActions    = require("../actions/ImageActions"),
+    ImageStore      = require("../stores/ImageStore"),
+    SettingsStore   = require("../stores/SettingsStore"),
     remote          = require("remote"),
     Menu            = remote.require("menu"),
     clipboard       = require("clipboard");
 
 require("codemirror/mode/markdown/markdown");
 
-var imageRoot = path.resolve(__dirname, "../../repo/public/media");
+var _converter;
 
-var markdownExtensions = function (converter) {
-  return [
-    {
-      type   : "lang",
-      filter : function (md) {
-        return md.replace(/---[\s\S]*?---/, "");
-      }
-    },
-    {
-      type    : "lang",
-      regex   : "/media",
-      replace : "file://" + imageRoot
-    }
-  ];
-};
+function getConverter(imageRoot) {
+  if (!_converter) {
+    var markdownExtensions = function (converter) {
+      return [
+        {
+          type   : "lang",
+          filter : function (md) {
+            return md.replace(/---[\s\S]*?---/, "");
+          }
+        },
+        {
+          type    : "lang",
+          regex   : "/media",
+          replace : "file://" + encodeURI(imageRoot)
+        }
+      ];
+    };
 
-var converter = new Showdown.converter({extensions: [markdownExtensions]});
+    _converter = new Showdown.converter({extensions: [markdownExtensions]});
+  }
+
+  return _converter;
+}
 
 
 /*=============================================*\
@@ -88,6 +95,7 @@ var Editor = module.exports = React.createClass({
   },
 
   render: function () {
+    var converter = getConverter(SettingsStore.getMediaPath());
     var previewHTML = converter.makeHtml(this.props.file.get("content"));
     return (
       <div className={this._classNames()}>

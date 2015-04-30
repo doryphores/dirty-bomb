@@ -5,18 +5,18 @@ var fs            = require("fs-extra"),
     Immutable     = require("immutable"),
     _             = require("underscore"),
     PathWatcher   = require("pathwatcher"),
+    Dialogs       = require("../Dialogs"),
+    shell         = require("shell"),
     AppDispatcher = require("../dispatcher/AppDispatcher"),
     EditorActions = require("../actions/EditorActions"),
-    Dialogs       = require("../Dialogs"),
-    shell         = require("shell");
+    SettingsStore = require("./SettingsStore");
 
 
 /*=============================================*\
   Private properties
 \*=============================================*/
 
-// TODO: this should go come from some json config
-var _contentDir = path.resolve(__dirname, "../../repo/content");
+var _contentDir;
 var _ignoredFiles = [".DS_Store", "Thumbs.db", ".git"];
 
 var _tree;                  // The immutable node tree
@@ -339,6 +339,11 @@ var TreeStore = assign({}, EventEmitter.prototype, {
 
 TreeStore.dispatchToken = AppDispatcher.register(function (action) {
   switch(action.actionType) {
+    case "setup_repo":
+    case "app_init":
+      AppDispatcher.waitFor([SettingsStore.dispatchToken]);
+      _contentDir = SettingsStore.getContentPath();
+      break;
     case "tree_init":
       init(action.pathsToExpand);
       TreeStore.emitChange();

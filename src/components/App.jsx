@@ -8,15 +8,16 @@ var React         = require("react"),
     EditorStore   = require("../stores/EditorStore"),
     ImageStore    = require("../stores/ImageStore"),
     SettingsStore = require("../stores/SettingsStore"),
+    RepoStore     = require("../stores/RepoStore"),
     AppActions    = require("../actions/AppActions");
 
 function getAppState() {
   return {
+    ready: SettingsStore.isReady() && RepoStore.isReady(),
     treeRootNode: TreeStore.getNode("."),
     files: EditorStore.getFiles(),
     imageSelectorOpen: ImageStore.getState().open,
-    images: ImageStore.getState().images,
-    settings: SettingsStore.getSettings()
+    images: ImageStore.getState().images
   };
 }
 
@@ -27,36 +28,41 @@ var App = React.createClass({
 
   componentDidMount: function() {
     SettingsStore.addChangeListener(this._onChange);
+    RepoStore.addChangeListener(this._onChange);
     TreeStore.addChangeListener(this._onChange);
     EditorStore.addChangeListener(this._onChange);
     ImageStore.addChangeListener(this._onChange);
+
     AppActions.init();
   },
 
   componentWillUnmount: function() {
     SettingsStore.removeChangeListener(this._onChange);
+    RepoStore.removeChangeListener(this._onChange);
     TreeStore.removeChangeListener(this._onChange);
     EditorStore.removeChangeListener(this._onChange);
     ImageStore.removeChangeListener(this._onChange);
   },
 
   render: function () {
-    if (!SettingsStore.isReady()) {
-      return null;
-    }
-    return (
-      <div className="panel-container horizontal">
-        <Tree rootNode={this.state.treeRootNode} />
-        <div className="workspace panel-container vertical">
-          <ToolBar />
-          <EditorPanes files={this.state.files} />
+    if (this.state.ready) {
+      return (
+        <div className="panel-container horizontal">
+          <Tree rootNode={this.state.treeRootNode} />
+          <div className="workspace panel-container vertical">
+            <ToolBar />
+            <EditorPanes files={this.state.files} />
+          </div>
+          <ImageSelector
+            open={this.state.imageSelectorOpen}
+            images={this.state.images} />
         </div>
-        <ImageSelector
-          open={this.state.imageSelectorOpen}
-          images={this.state.images} />
+      );
+    } else {
+      return (
         <SetupPanel settings={this.state.settings} />
-      </div>
-    );
+      );
+    }
   },
 
   _onChange: function () {

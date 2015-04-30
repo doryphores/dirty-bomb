@@ -8,15 +8,11 @@ var SetupActions = {
       if (err) {
         console.log(err);
       } else {
-        SetupActions.authenticated(user);
+        AppDispatcher.dispatch({
+          actionType: "setup_authenticated",
+          user: user
+        });
       }
-    });
-  },
-
-  authenticated: function (user) {
-    AppDispatcher.dispatch({
-      actionType: "setup_authenticated",
-      user: user
     });
   },
 

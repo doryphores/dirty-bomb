@@ -5,14 +5,14 @@ var fs            = require("fs-extra"),
     PathWatcher   = require("pathwatcher"),
     Immutable     = require("immutable"),
     shell         = require("shell"),
-    AppDispatcher = require("../dispatcher/AppDispatcher");
+    AppDispatcher = require("../dispatcher/AppDispatcher"),
+    SettingsStore = require("./SettingsStore");
 
-var _contentDir = path.resolve(__dirname, "../../repo/content");
+var _contentDir;
 
 var _files = Immutable.List();
 var _activeFile = "";
 var _watchers = {};
-
 
 function getFileIndex(filePath) {
   return _files.findIndex(function (file) {
@@ -157,6 +157,11 @@ var EditorStore = assign({}, EventEmitter.prototype, {
 
 EditorStore.dispatchToken = AppDispatcher.register(function (action) {
   switch(action.actionType) {
+    case "setup_repo":
+    case "app_init":
+      AppDispatcher.waitFor([SettingsStore.dispatchToken]);
+      _contentDir = SettingsStore.getContentPath();
+      break;
     case "editor_open":
       openFile(action.nodePath);
       break;

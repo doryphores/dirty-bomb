@@ -6,7 +6,7 @@ var React            = require("react"),
 
 function getState() {
   return {
-    currentStep: SettingsStore.isGithubReady() ? "repo" : "github"
+    currentStep: SettingsStore.isReady() ? "repo" : "github"
   };
 }
 

@@ -7,12 +7,10 @@ var fs            = require("fs-extra"),
     SettingsStore = require("./SettingsStore"),
     AppDispatcher = require("../dispatcher/AppDispatcher");
 
-var _repoURL = "git@github.com:simplybusiness/bijou.git"
-
 var _ready = false;
 
 function initRepo(done) {
-  console.log("INIT REPO IN ", SettingsStore.get("userSettings.repoPath"));
+  console.log("INIT REPO");
   nodegit.Repository.open(SettingsStore.get("userSettings.repoPath")).then(function () {
     console.log("REPO EXISTS");
     _ready = true;
@@ -21,8 +19,8 @@ function initRepo(done) {
 }
 
 function setupRepo(done) {
-  console.log("CLONING REPO TO", SettingsStore.get("userSettings.repoPath"));
-  nodegit.Clone(_repoURL, SettingsStore.get("userSettings.repoPath"), {
+  console.log("CLONING REPO");
+  nodegit.Clone(SettingsStore.get("repositoryURL"), SettingsStore.get("userSettings.repoPath"), {
     remoteCallbacks: {
       credentials: function (url, userName) {
         return nodegit.Cred.sshKeyNew(
@@ -33,7 +31,8 @@ function setupRepo(done) {
         );
       },
       transferProgress: function (stats) {
-        var progress = (stats.receivedObjects() + (stats.indexedObjects() || 0)) / stats.totalObjects() * 50;
+        var processedObjects = (stats.receivedObjects() + (stats.indexedObjects() || 0));
+        var progress = processedObjects / stats.totalObjects() * 50;
         RepoStore.emitProgress(Math.round(progress));
       }
     }
@@ -83,7 +82,6 @@ var RepoStore = assign({}, EventEmitter.prototype, {
 RepoStore.dispatchToken = AppDispatcher.register(function (action) {
   switch(action.actionType) {
     case "app_init":
-      AppDispatcher.waitFor([SettingsStore.dispatchToken]);
       initRepo(function () {
         RepoStore.emitChange();
       });

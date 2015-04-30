@@ -4,14 +4,13 @@ var fs            = require("fs-extra"),
     _             = require("underscore"),
     assign        = require("object-assign"),
     EventEmitter  = require("events").EventEmitter,
-    PathWatcher   = require("pathwatcher"),
-    Immutable     = require("immutable"),
     shell         = require("shell"),
     app           = require("remote").require("app"),
     Dialogs       = require("../Dialogs"),
-    AppDispatcher = require("../dispatcher/AppDispatcher");
+    AppDispatcher = require("../dispatcher/AppDispatcher"),
+    SettingsStore = require("./SettingsStore");
 
-var _imageDir = path.resolve(__dirname, "../../repo/public/media");
+var _imageDir;
 
 var _open = false;
 var _images = [];
@@ -29,6 +28,7 @@ function load() {
       images.push({
         name: path.basename(p),
         path: p,
+        absolutePath: path.join(_imageDir, p),
         size: s.size
       });
     })
@@ -92,6 +92,12 @@ var ImageStore = assign({}, EventEmitter.prototype, {
 
 ImageStore.dispatchToken = AppDispatcher.register(function (action) {
   switch(action.actionType) {
+    case "setup_repo":
+    case "app_init":
+      AppDispatcher.waitFor([SettingsStore.dispatchToken]);
+      _imageDir = SettingsStore.getMediaPath();
+      if (_imageDir) load();
+      break;
     case "images_open":
       open(action.callback);
       break;
@@ -119,8 +125,5 @@ ImageStore.dispatchToken = AppDispatcher.register(function (action) {
       // no op
   }
 });
-
-// Preload images
-load();
 
 module.exports = ImageStore;

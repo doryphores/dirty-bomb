@@ -1,4 +1,5 @@
 var React        = require("react"),
+    app          = require("remote").require("app"),
     classNames   = require("classnames"),
     Dialogs      = require("../Dialogs"),
     SetupActions = require("../actions/SetupActions"),
@@ -59,7 +60,7 @@ var RepoSetupPanel = React.createClass({
 
   _selectRepoLocation: function () {
     Dialogs.promptForDirectory({
-      defaultPath: this.state.repoPath
+      defaultPath: app.getPath("home")
     }, function (directoryPath) {
       if (directoryPath) {
         this.setState({repoPath: directoryPath});

@@ -2,8 +2,6 @@ var React         = require("react"),
     classNames    = require("classnames"),
     ImageActions  = require("../actions/ImageActions");
 
-var imageRoot = path.resolve(__dirname, "../../repo/public/media");
-
 var ImageSelector = React.createClass({
   render: function() {
     var images = this.props.images.map(function (image) {
@@ -11,7 +9,7 @@ var ImageSelector = React.createClass({
         <li key={image.path}
             className="image-list__item"
             onDoubleClick={this._select.bind(this, image)}>
-          <img src={"file://" + path.join(imageRoot, image.path)} />
+          <img src={"file://" + image.absolutePath} />
         </li>
       );
     }.bind(this));
