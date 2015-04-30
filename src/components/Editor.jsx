@@ -14,6 +14,8 @@ var React           = require("react"),
     clipboard       = require("clipboard");
 
 require("codemirror/mode/markdown/markdown");
+require("codemirror/mode/yaml/yaml");
+require("codemirror/addon/mode/multiplex");
 
 var _converter;
 
@@ -42,6 +44,20 @@ function getConverter(imageRoot) {
 }
 
 
+CodeMirror.defineMode("frontmatter_markdown", function(config) {
+  return CodeMirror.multiplexingMode(
+    CodeMirror.getMode(config, "text/x-markdown"),
+    {
+      open: "---",
+      close: "---",
+      mode: CodeMirror.getMode(config, "text/x-yaml"),
+      delimStyle: "delimit"
+    }
+  );
+});
+
+
+
 /*=============================================*\
   Component definitions
 \*=============================================*/
@@ -52,7 +68,7 @@ var Editor = module.exports = React.createClass({
 
   componentDidMount: function () {
     this.editor = CodeMirror(this.refs.editor.getDOMNode(), {
-      mode         : "markdown",
+      mode         : "frontmatter_markdown",
       theme        : "mbo",
       lineWrapping : true,
       value        : this.props.file.get("content")
