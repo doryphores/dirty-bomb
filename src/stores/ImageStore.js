@@ -21,22 +21,24 @@ var CHANGE_EVENT = "change";
 function load() {
   var images = [];
 
-  filewalker(_imageDir, {
-    matchRegExp: /\.(jpe?g|png|gif)$/
-  })
-    .on("file", function (p, s) {
-      images.push({
-        name: path.basename(p),
-        path: p,
-        absolutePath: path.join(_imageDir, p),
-        size: s.size
-      });
+  fs.exists(_imageDir, function () {
+    filewalker(_imageDir, {
+      matchRegExp: /\.(jpe?g|png|gif)$/
     })
-    .on("done", function () {
-      _images = _.sortBy(images, "name");
-      ImageStore.emitChange();
-    })
-    .walk();
+      .on("file", function (p, s) {
+        images.push({
+          name: path.basename(p),
+          path: p,
+          absolutePath: path.join(_imageDir, p),
+          size: s.size
+        });
+      })
+      .on("done", function () {
+        _images = _.sortBy(images, "name");
+        ImageStore.emitChange();
+      })
+      .walk();
+  });
 }
 
 function addImage(imagePath) {
