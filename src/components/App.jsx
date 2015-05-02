@@ -5,7 +5,6 @@ var React         = require("react"),
     SetupPanel    = require("./SetupPanel"),
     EditorPanes   = require("./EditorPanes"),
     TreeStore     = require("../stores/TreeStore"),
-    EditorStore   = require("../stores/EditorStore"),
     ImageStore    = require("../stores/ImageStore"),
     SettingsStore = require("../stores/SettingsStore"),
     RepoStore     = require("../stores/RepoStore"),
@@ -15,7 +14,6 @@ function getAppState() {
   return {
     ready: SettingsStore.isReady() && RepoStore.isReady(),
     treeRootNode: TreeStore.getNode("."),
-    files: EditorStore.getFiles(),
     imageSelectorOpen: ImageStore.getState().open,
     images: ImageStore.getState().images
   };
@@ -30,7 +28,6 @@ var App = React.createClass({
     SettingsStore.addChangeListener(this._onChange);
     RepoStore.addChangeListener(this._onChange);
     TreeStore.addChangeListener(this._onChange);
-    EditorStore.addChangeListener(this._onChange);
     ImageStore.addChangeListener(this._onChange);
 
     AppActions.init();
@@ -40,7 +37,6 @@ var App = React.createClass({
     SettingsStore.removeChangeListener(this._onChange);
     RepoStore.removeChangeListener(this._onChange);
     TreeStore.removeChangeListener(this._onChange);
-    EditorStore.removeChangeListener(this._onChange);
     ImageStore.removeChangeListener(this._onChange);
   },
 
@@ -51,7 +47,7 @@ var App = React.createClass({
           <Tree rootNode={this.state.treeRootNode} />
           <div className="workspace panel-container vertical">
             <ToolBar />
-            <EditorPanes files={this.state.files} />
+            <EditorPanes />
           </div>
           <ImageSelector
             open={this.state.imageSelectorOpen}

@@ -4,14 +4,14 @@ var React           = require("react"),
     TabBar          = require("./TabBar"),
     EditorStore     = require("../stores/EditorStore"),
     EditorActions   = require("../actions/EditorActions"),
-    Dialogs         = require("../Dialogs");
-
+    Dialogs         = require("../Dialogs"),
+    Reflux          = require("reflux");
 
 var EditorPanes = React.createClass({
-  mixins: [PureRenderMixin],
+  mixins: [PureRenderMixin, Reflux.connect(EditorStore, "files")],
 
   render: function() {
-    var editors = this.props.files.map(function (file) {
+    var editors = this.state.files.map(function (file) {
       return (
         <Editor
           key={file.get("path")}
@@ -25,7 +25,7 @@ var EditorPanes = React.createClass({
     return (
       <div className="panel-container vertical">
         <TabBar
-          files={this.props.files}
+          files={this.state.files}
           onChangeFocus={this._onChangeFocus}
           onClose={this._onClose} />
         <div className="editor-panes">
@@ -36,7 +36,7 @@ var EditorPanes = React.createClass({
   },
 
   _onChangeFocus: function (filePath) {
-    EditorActions.focusOn(filePath);
+    EditorActions.focus(filePath);
   },
 
   _onClose: function (filePath) {
@@ -50,7 +50,7 @@ var EditorPanes = React.createClass({
       }, function (button) {
         switch (button) {
           case 0:
-            EditorActions.saveAndClose(filePath);
+            EditorActions.save(filePath, true);
             break;
           case 2:
             EditorActions.close(filePath);

@@ -1,18 +1,77 @@
 var fs            = require("fs-extra"),
     path          = require("path"),
-    assign        = require("object-assign"),
-    EventEmitter  = require("events").EventEmitter,
     PathWatcher   = require("pathwatcher"),
     Immutable     = require("immutable"),
     shell         = require("shell"),
     AppDispatcher = require("../dispatcher/AppDispatcher"),
-    SettingsStore = require("./SettingsStore");
+    SettingsStore = require("./SettingsStore"),
+    EditorActions = require("../actions/EditorActions");
 
-var _contentDir;
+var _contentDir = SettingsStore.getContentPath();;
 
 var _files = Immutable.List();
 var _activeFile = "";
 var _watchers = {};
+
+var EditorStore = Reflux.createStore({
+  listenables: EditorActions,
+
+  getInitialState: function () {
+    return _files;
+  },
+
+  getFile: function (filePath) {
+    return _files.get(getFileIndex(filePath));
+  },
+
+  onOpen: function (filePath) {
+    openFile(filePath, this.emitChange.bind(this));
+  },
+
+  onChange: function (filePath, content) {
+    updateFile(filePath, content);
+    this.emitChange();
+  },
+
+  onFocus: function (filePath) {
+    setAsActive(filePath);
+    this.emitChange();
+  },
+
+  onClose: function (filePath) {
+    closeFile(filePath);
+    this.emitChange();
+  },
+
+  onSave: function (filePath, close) {
+    saveFile(filePath, function (err) {
+      if (err) {
+        console.log(err);
+      } else {
+        if (close) {
+          closeFile(filePath);
+        }
+        this.emitChange();
+      }
+    }.bind(this));
+  },
+
+  onDelete: function (filePath) {
+    deleteFile(filePath);
+    this.emitChange();
+  },
+
+  emitChange: function () {
+    this.trigger(_files);
+  }
+});
+
+module.exports = EditorStore;
+
+/* ======================================== *\
+   Private functions
+\* ======================================== */
+
 
 function getFileIndex(filePath) {
   return _files.findIndex(function (file) {
@@ -20,11 +79,11 @@ function getFileIndex(filePath) {
   });
 }
 
-function openFile(filePath) {
+function openFile(filePath, done) {
   var fileIndex = getFileIndex(filePath);
   if (fileIndex > -1) {
     setIndexAsActive(fileIndex);
-    EditorStore.emitChange();
+    done();
   } else {
     fs.readFile(path.join(_contentDir, filePath), {
       encoding: "utf-8"
@@ -48,7 +107,7 @@ function openFile(filePath) {
       // Start watching the file
       addWatcher(filePath);
 
-      EditorStore.emitChange();
+      done();
     });
   }
 }
@@ -65,7 +124,6 @@ function setIndexAsActive(fileIndex) {
 
 function setAsActive(filePath) {
   setIndexAsActive(getFileIndex(filePath));
-  EditorStore.emitChange();
 }
 
 function closeFile(filePath) {
@@ -84,8 +142,6 @@ function closeFile(filePath) {
   _files = _files.remove(fileIndex);
 
   removeWatcher(filePath);
-
-  EditorStore.emitChange();
 }
 
 function updateFile(filePath, content) {
@@ -95,11 +151,9 @@ function updateFile(filePath, content) {
       clean: file.get("diskContent") === content
     });
   });
-
-  EditorStore.emitChange();
 }
 
-function saveFile(filePath, close) {
+function saveFile(filePath, done) {
   var fileIndex = getFileIndex(filePath);
   var content = _files.getIn([fileIndex, "content"]);
 
@@ -110,23 +164,16 @@ function saveFile(filePath, close) {
     path.join(_contentDir, filePath),
     content,
     function (err) {
-      if (err) {
-        console.log(err);
-      } else {
-        if (close) {
-          closeFile(filePath);
-        } else {
-          _files = _files.update(fileIndex, function (file) {
-            return file.merge({
-              diskContent: content,
-              clean:true
-            });
-          });
-          // Restart the watcher
-          addWatcher(filePath);
-          EditorStore.emitChange();
-        }
-      }
+      if (err) return done(err);
+      _files = _files.update(fileIndex, function (file) {
+        return file.merge({
+          diskContent: content,
+          clean:true
+        });
+      });
+      // Restart the watcher
+      addWatcher(filePath);
+      done();
     }
   );
 }
@@ -136,60 +183,10 @@ function deleteFile(filePath) {
   shell.moveItemToTrash(path.join(_contentDir, filePath));
 }
 
-var CHANGE_EVENT = "change";
 
-var EditorStore = assign({}, EventEmitter.prototype, {
-  getFiles: function () {
-    return _files;
-  },
-
-  getFile: function (filePath) {
-    return _files.get(getFileIndex(filePath));
-  },
-
-  emitChange: function () {
-    this.emit(CHANGE_EVENT);
-  },
-
-  addChangeListener: function (listener) {
-    this.on(CHANGE_EVENT, listener);
-  },
-
-  removeChangeListener: function (listener) {
-    this.removeListener(CHANGE_EVENT, listener);
-  }
-});
-
-EditorStore.dispatchToken = AppDispatcher.register(function (action) {
-  switch(action.actionType) {
-    case "setup_repo":
-    case "app_init":
-      AppDispatcher.waitFor([SettingsStore.dispatchToken]);
-      _contentDir = SettingsStore.getContentPath();
-      break;
-    case "editor_open":
-      openFile(action.nodePath);
-      break;
-    case "editor_change":
-      updateFile(action.nodePath, action.content);
-      break;
-    case "editor_focus":
-      setAsActive(action.nodePath);
-      break;
-    case "editor_close":
-      closeFile(action.nodePath);
-      break;
-    case "editor_save":
-      saveFile(action.nodePath, action.close);
-      break;
-    case "editor_delete":
-      deleteFile(action.nodePath);
-      break;
-    default:
-      // no op
-  }
-});
-
+/* ============================================== *\
+   Watcher helper class
+\* ============================================== */
 
 var Watcher = function (filePath) {
   this.filePath = filePath;
@@ -227,8 +224,6 @@ Watcher.prototype.updateFromDisk = function () {
 
         // Remove the watcher
         removeWatcher(this.filePath);
-
-        EditorStore.emitChange();
       }
     } else {
       // File changed on disk so update disk content and update
@@ -241,8 +236,8 @@ Watcher.prototype.updateFromDisk = function () {
           clean: newContent === fileContent
         });
       });
-      EditorStore.emitChange();
     }
+    EditorStore.emitChange();
   }.bind(this));
 };
 
@@ -259,5 +254,3 @@ function addWatcher(filePath) {
   }
   _watchers[filePath] = new Watcher(filePath);
 }
-
-module.exports = EditorStore;
