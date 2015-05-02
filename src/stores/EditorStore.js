@@ -90,8 +90,10 @@ function closeFile(filePath) {
 
 function updateFile(filePath, content) {
   _files = _files.update(getFileIndex(filePath), function (file) {
-    return file.set("content", content)
-      .set("clean", file.get("diskContent") === content);
+    return file.merge({
+      content: content,
+      clean: file.get("diskContent") === content
+    });
   });
 
   EditorStore.emitChange();
@@ -115,7 +117,10 @@ function saveFile(filePath, close) {
           closeFile(filePath);
         } else {
           _files = _files.update(fileIndex, function (file) {
-            return file.set("diskContent", content).set("clean", true);
+            return file.merge({
+              diskContent: content,
+              clean:true
+            });
           });
           // Restart the watcher
           addWatcher(filePath);
@@ -214,7 +219,10 @@ Watcher.prototype.updateFromDisk = function () {
       } else {
         // File was dirty so clear disk content
         _files = _files.update(fileIndex, function (file) {
-          return file.set("diskContent", "").set("clean", false);
+          return file.merge({
+            diskContent: "",
+            clean: false
+          });
         });
 
         // Remove the watcher
@@ -226,10 +234,12 @@ Watcher.prototype.updateFromDisk = function () {
       // File changed on disk so update disk content and update
       // content if file was clean
       _files = _files.update(fileIndex, function (file) {
-        return file.set("diskContent", fileContent)
-          .set("content", file.get("clean") ? fileContent : file.get("content"));
-      }).update(fileIndex, function (file) {
-        return file.set("clean", file.get("content") === fileContent);
+        var newContent = file.get("clean") ? fileContent : file.get("content");
+        return file.merge({
+          diskContent: fileContent,
+          content: newContent,
+          clean: newContent === fileContent
+        });
       });
       EditorStore.emitChange();
     }
