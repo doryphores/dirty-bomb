@@ -1,7 +1,6 @@
 var app           = require("app");
 var BrowserWindow = require("browser-window");
 var ipc           = require("ipc");
-var dialog        = require("dialog");
 
 var mainWindow = null;
 var specWindow = null;

@@ -16,6 +16,7 @@ var React           = require("react"),
 require("codemirror/mode/markdown/markdown");
 require("codemirror/mode/yaml/yaml");
 require("codemirror/addon/mode/multiplex");
+require("codemirror/addon/edit/trailingspace");
 
 var _converter;
 
@@ -68,10 +69,11 @@ var Editor = module.exports = React.createClass({
 
   componentDidMount: function () {
     this.editor = CodeMirror(this.refs.editor.getDOMNode(), {
-      mode         : "frontmatter_markdown",
-      theme        : "mbo",
-      lineWrapping : true,
-      value        : this.props.file.get("content")
+      mode              : "frontmatter_markdown",
+      theme             : "mbo",
+      lineWrapping      : true,
+      showTrailingSpace : true,
+      value             : this.props.file.get("content")
     });
 
     // We need to override the copy/paste operation keyboard
