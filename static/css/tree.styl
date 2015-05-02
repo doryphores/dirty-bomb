@@ -36,7 +36,7 @@
 .tree__node-list--is-root
   display block
   position relative
-  padding 10px
+  padding 10px 0 10px 10px
   min-width -webkit-min-content
   height 100%
 
@@ -72,6 +72,24 @@
 
   .tree__node--is-selected > &
     color #f2f2f2
+
+  .label-input
+    position absolute
+    top 0
+    left 18px
+    right 0
+
+  input
+    display block
+    box-sizing border-box
+    height 26px
+    width 100%
+    padding 0 5px 0 4px
+    border none
+    background #ffffff
+    font-size inherit
+    font-family inherit
+    outline none
 
 
 // Tree label icons

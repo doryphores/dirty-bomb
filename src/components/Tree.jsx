@@ -60,6 +60,12 @@ var Tree = module.exports = React.createClass({
 Tree.Node = React.createClass({
   mixins: [PureRenderMixin],
 
+  getInitialState: function () {
+    return {
+      editMode: false
+    };
+  },
+
   render: function () {
     var nodeClasses = classNames("tree__node", {
       "tree__node--is-selected" : this.props.node.get("selected"),
@@ -72,27 +78,39 @@ Tree.Node = React.createClass({
       "icon-repo": this._isRoot()
     });
 
+    var label = this.state.editMode && (
+      <span className={labelClasses}>
+        <LabelInput
+          filename={this.props.node.get("name")}
+          onChange={this._rename} />
+      </span>
+    );
+
     if (this._isFile()) {
+      label = label || (
+        <span
+          className={labelClasses}
+          onClick={this._handleClick}
+          onContextMenu={this._showMenu}
+          onDoubleClick={this._handleDoubleClick}>
+          {this.props.node.get("name")}
+        </span>
+      );
       return (
-        <li className={nodeClasses}>
-          <span
-            className={labelClasses}
-            onClick={this._handleClick}
-            onContextMenu={this._showMenu}
-            onDoubleClick={this._handleDoubleClick}>
-            {this.props.node.get("name")}
-          </span>
-        </li>
+        <li className={nodeClasses}>{label}</li>
       );
     } else {
+      label = label || (
+        <span
+          className={labelClasses}
+          onClick={this._handleClick}
+          onContextMenu={this._showMenu}>
+          {this.props.node.get("name")}
+        </span>
+      );
       return (
         <li className={nodeClasses}>
-          <span
-            className={labelClasses}
-            onClick={this._handleClick}
-            onContextMenu={this._showMenu}>
-            {this.props.node.get("name")}
-          </span>
+          {label}
           <ul className="tree__node-list">
             {this.props.node.get("children").map(function (node) {
               return (
@@ -139,6 +157,13 @@ Tree.Node = React.createClass({
         }
       },
       {
+        type: "separator"
+      },
+      {
+        label: "Rename",
+        click: this._edit
+      },
+      {
         label: "Delete",
         click: function () {
           Dialogs.confirm({
@@ -167,5 +192,66 @@ Tree.Node = React.createClass({
 
   _isRoot: function () {
     return this.props.node.get("path") === ".";
+  },
+
+  _edit: function () {
+    this.setState({editMode: true});
+  },
+
+  _rename: function (filename) {
+    if (filename !== this.props.node.get("name")) {
+      TreeActions.rename(this.props.node.get("path"), filename);
+    }
+    this.setState({editMode: false});
+  }
+});
+
+var LabelInput = React.createClass({
+  getInitialState: function () {
+    return {
+      filename: this.props.filename
+    };
+  },
+
+  componentDidMount: function() {
+    var inputElement = React.findDOMNode(this.refs.input);
+    var extIndex = this.props.filename.lastIndexOf(".md");
+    inputElement.setSelectionRange(0,
+      extIndex > -1 ? extIndex : this.props.filename.length);
+    inputElement.focus();
+  },
+
+  render: function () {
+    return (
+      <div className="label-input">
+        <input ref="input"
+            value={this.state.filename}
+            onChange={this._onChange}
+            onKeyUp={this._onKeyUp}
+            onBlur={this._onBlur} />
+      </div>
+    )
+  },
+
+  _onChange: function (e) {
+    this.setState({filename: e.currentTarget.value});
+  },
+
+  _onKeyUp: function (e) {
+    switch (e.key) {
+      case "Enter":
+        var formatted = this.state.filename.toLowerCase().replace(/\s+/g, "-");
+        this.props.onChange(formatted);
+        break;
+      case "Escape":
+        this.props.onChange(this.props.filename);
+        break;
+      default:
+        // no op
+    }
+  },
+
+  _onBlur: function () {
+    this.props.onChange(this.props.filename);
   }
 });

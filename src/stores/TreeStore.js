@@ -319,9 +319,9 @@ var TreeStore = assign({}, EventEmitter.prototype, {
     this.removeAllListeners(CHANGE_EVENT);
   },
 
-  emitChange: _.debounce(function () {
+  emitChange: function () {
     this.emit(CHANGE_EVENT);
-  }, 50),
+  },
 
   addChangeListener: function (listener) {
     this.on(CHANGE_EVENT, listener);
@@ -378,6 +378,12 @@ TreeStore.dispatchToken = AppDispatcher.register(function (action) {
             }
           });
         }
+      });
+      break;
+    case "tree_rename":
+      var newPath = absolute(path.join(path.dirname(action.nodePath), action.filename));
+      fs.exists(newPath, function (exists) {
+        if (!exists) fs.rename(absolute(action.nodePath), newPath);
       });
       break;
     case "tree_delete":
