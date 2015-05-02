@@ -56,6 +56,14 @@ var TreeActions = {
       nodePath: nodePath,
       filename: filename
     });
+  },
+
+  move: function (nodePath, newPath) {
+    AppDispatcher.dispatch({
+      actionType: "tree_move",
+      nodePath: nodePath,
+      newPath: newPath
+    });
   }
 };
 

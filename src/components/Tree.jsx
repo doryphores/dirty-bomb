@@ -1,6 +1,7 @@
 var React           = require("react"),
     PureRenderMixin = require("react/addons").addons.PureRenderMixin,
     classNames      = require("classnames"),
+    SettingsStore   = require("../stores/SettingsStore"),
     TreeActions     = require("../actions/TreeActions"),
     EditorActions   = require("../actions/EditorActions");
     path            = require("path"),
@@ -29,6 +30,7 @@ var Tree = module.exports = React.createClass({
           <ul className="tree__node-list tree__node-list--is-root">
             <Tree.Node
               key="root"
+              readOnly={true}
               node={this.props.rootNode} />
           </ul>
         </div>
@@ -62,7 +64,8 @@ Tree.Node = React.createClass({
 
   getInitialState: function () {
     return {
-      editMode: false
+      editMode: false,
+      readOnly: false
     };
   },
 
@@ -140,6 +143,10 @@ Tree.Node = React.createClass({
   },
 
   _showMenu: function () {
+    if (this.props.readOnly) {
+      return;
+    }
+
     var nodePath = this.props.node.get("path");
     var nodeType = this.props.node.get("type");
 
@@ -162,6 +169,10 @@ Tree.Node = React.createClass({
       {
         label: "Rename",
         click: this._edit
+      },
+      {
+        label: "Move",
+        click: this._move
       },
       {
         label: "Delete",
@@ -196,6 +207,20 @@ Tree.Node = React.createClass({
 
   _edit: function () {
     this.setState({editMode: true});
+  },
+
+  _move: function () {
+    var contentRoot = SettingsStore.getContentPath();
+    Dialogs.promptForDirectory({
+      defaultPath: path.join(contentRoot, path.dirname(this.props.node.get("path")))
+    }, function (filename) {
+      if (filename) {
+        if (filename.indexOf(contentRoot) === 0) {
+          TreeActions.move(this.props.node.get("path"),
+            path.join(path.relative(contentRoot, filename), this.props.node.get("name")));
+        }
+      }
+    }.bind(this));
   },
 
   _rename: function (filename) {

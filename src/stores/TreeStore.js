@@ -386,6 +386,11 @@ TreeStore.dispatchToken = AppDispatcher.register(function (action) {
         if (!exists) fs.rename(absolute(action.nodePath), newPath);
       });
       break;
+    case "tree_move":
+      fs.exists(action.newPath, function (exists) {
+        if (!exists) fs.rename(absolute(action.nodePath), absolute(action.newPath));
+      });
+      break;
     case "tree_delete":
       shell.moveItemToTrash(absolute(action.nodePath));
       break;
