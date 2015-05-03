@@ -1,11 +1,8 @@
 var path              = require("path"),
     Immutable         = require("immutable"),
-    SettingsStore     = require("./SettingsStore"),
-    EditorActions     = require("../actions/EditorActions"),
     FileSystemStore   = require("./FileSystemStore"),
+    EditorActions     = require("../actions/EditorActions"),
     FileSystemActions = require("../actions/FileSystemActions");
-
-var _contentDir = SettingsStore.getContentPath();
 
 var _files = Immutable.List();
 var _activeFile = "";
@@ -32,7 +29,7 @@ var EditorStore = Reflux.createStore({
       setIndexAsActive(fileIndex);
       this.emitChange();
     } else {
-      FileSystemActions.open(absolute(filePath));
+      FileSystemActions.open(filePath);
     }
   },
 
@@ -66,24 +63,24 @@ var EditorStore = Reflux.createStore({
 
     _files = _files.remove(fileIndex);
 
-    FileSystemActions.unwatch(absolute(filePath));
+    FileSystemActions.unwatch(filePath);
 
     this.emitChange();
   },
 
   onSave: function (filePath, close) {
     var content = _files.getIn([getFileIndex(filePath), "content"]);
-    FileSystemActions.save(absolute(filePath), content);
+    FileSystemActions.save(filePath, content);
     if (close) this.onClose(filePath);
     this.emitChange();
   },
 
   onDelete: function (filePath) {
-    FileSystemActions.delete(absolute(filePath));
+    FileSystemActions.delete(filePath);
   },
 
   _onFSChange: function (fsEvent) {
-    var filePath = path.relative(_contentDir, fsEvent.nodePath);
+    var filePath = fsEvent.nodePath;
     var fileIndex = getFileIndex(filePath);
 
     switch (fsEvent.event) {
@@ -144,10 +141,6 @@ module.exports = EditorStore;
 /* ======================================== *\
    Private functions
 \* ======================================== */
-
-function absolute(filePath) {
-  return path.join(_contentDir, filePath);
-}
 
 function getFileIndex(filePath) {
   return _files.findIndex(function (file) {

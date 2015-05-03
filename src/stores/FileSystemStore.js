@@ -1,18 +1,20 @@
-var fs = require("fs-extra"),
-    path = require("path"),
-    shell = require("shell"),
-    PathWatcher = require("pathwatcher"),
-    Reflux = require("reflux"),
+var fs                = require("fs-extra"),
+    path              = require("path"),
+    shell             = require("shell"),
+    PathWatcher       = require("pathwatcher"),
+    Reflux            = require("reflux"),
+    SettingsStore     = require("./SettingsStore"),
     FileSystemActions = require("../actions/FileSystemActions");
 
+var _contentDir = SettingsStore.getContentPath();
 var _watchers = {};
+
+function absolute(filePath) {
+  return path.join(_contentDir, filePath);
+}
 
 var FileSystemStore = Reflux.createStore({
   listenables: FileSystemActions,
-
-  init: function () {
-
-  },
 
   onWatch: function (nodePath) {
     this._watch(nodePath);
@@ -23,11 +25,11 @@ var FileSystemStore = Reflux.createStore({
   },
 
   onCreate: function (nodePath, content) {
-    fs.outputFile(nodePath, content);
+    fs.outputFile(absolute(nodePath), content);
   },
 
   onOpen: function (nodePath) {
-    fs.readFile(nodePath, {
+    fs.readFile(absolute(nodePath), {
       encoding: "utf-8"
     }, function (err, fileContent) {
       this.trigger({
@@ -41,7 +43,7 @@ var FileSystemStore = Reflux.createStore({
 
   onSave: function (nodePath, content) {
     this._unwatch(nodePath);
-    fs.outputFile(nodePath, content, function (err) {
+    fs.outputFile(absolute(nodePath), content, function (err) {
       if (err) return console.log(err);
 
       this.trigger({
@@ -55,14 +57,14 @@ var FileSystemStore = Reflux.createStore({
   },
 
   onDelete: function (nodePath) {
-    shell.moveItemToTrash(nodePath);
+    shell.moveItemToTrash(absolute(nodePath));
   },
 
   _watch: function (nodePath) {
     if (_watchers[nodePath]) {
       _watchers[nodePath].close();
     }
-    _watchers[nodePath] = PathWatcher.watch(nodePath,
+    _watchers[nodePath] = PathWatcher.watch(absolute(nodePath),
       this._onNodeChange.bind(this, nodePath));
   },
 
@@ -74,8 +76,7 @@ var FileSystemStore = Reflux.createStore({
   },
 
   _onNodeChange: function (nodePath) {
-    console.log("CHANGED", nodePath);
-    fs.readFile(nodePath, {
+    fs.readFile(absolute(nodePath), {
       encoding: "utf-8"
     }, function (err, content) {
       if (err) {
