@@ -178,7 +178,7 @@ Tree.Node = React.createClass({
             details: "Your are deleting '" + nodePath + "'.",
             buttons: ["Cancel", "Move to trash"]
           }, function (button) {
-            if (button === 1) TreeActions.delete(nodePath);
+            if (button === 1) EditorActions.delete(nodePath);
           });
         }
       }

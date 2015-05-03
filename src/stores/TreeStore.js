@@ -6,7 +6,6 @@ var fs            = require("fs-extra"),
     _             = require("underscore"),
     PathWatcher   = require("pathwatcher"),
     Dialogs       = require("../Dialogs"),
-    shell         = require("shell"),
     AppDispatcher = require("../dispatcher/AppDispatcher"),
     EditorActions = require("../actions/EditorActions"),
     SettingsStore = require("./SettingsStore"),
@@ -406,9 +405,6 @@ TreeStore.dispatchToken = AppDispatcher.register(function (action) {
       fs.exists(action.newPath, function (exists) {
         if (!exists) fs.rename(absolute(action.nodePath), absolute(action.newPath));
       });
-      break;
-    case "tree_delete":
-      shell.moveItemToTrash(absolute(action.nodePath));
       break;
     default:
       // no op

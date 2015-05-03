@@ -36,13 +36,6 @@ var TreeActions = {
     });
   },
 
-  delete: function (nodePath) {
-    AppDispatcher.dispatch({
-      actionType: "tree_delete",
-      nodePath: nodePath
-    });
-  },
-
   rename: function (nodePath, filename) {
     AppDispatcher.dispatch({
       actionType: "tree_rename",
