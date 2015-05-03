@@ -80,16 +80,16 @@ var Editor = module.exports = React.createClass({
     // shortcuts to work with the context menu
     if (process.platform === 'darwin') {
       this.editor.setOption("extraKeys", {
-        "Cmd-C": this._copy,
-        "Cmd-V": this._paste,
-        "Cmd-X": this._cut,
+        "Cmd-C": this._onCopy,
+        "Cmd-V": this._onPaste,
+        "Cmd-X": this._onCut,
         "Cmd-S": this._onSave
       });
     } else {
       this.editor.setOption("extraKeys", {
-        "Ctrl-C": this._copy,
-        "Ctrl-V": this._paste,
-        "Ctrl-X": this._cut,
+        "Ctrl-C": this._onCopy,
+        "Ctrl-V": this._onPaste,
+        "Ctrl-X": this._onCut,
         "Ctrl-S": this._onSave
       });
     }
@@ -170,15 +170,15 @@ var Editor = module.exports = React.createClass({
       },
       {
         label: "Cut",
-        click: this._cut
+        click: this._onCut
       },
       {
         label: "Copy",
-        click: this._copy
+        click: this._onCopy
       },
       {
         label: "Paste",
-        click: this._paste
+        click: this._onPaste
       },
       {
         type: "separator"
@@ -193,16 +193,16 @@ var Editor = module.exports = React.createClass({
     menu.popup(remote.getCurrentWindow());
   },
 
-  _cut: function () {
+  _onCut: function () {
     clipboard.writeText(this.editor.getSelection());
     this.editor.replaceSelection("");
   },
 
-  _copy: function () {
+  _onCopy: function () {
     clipboard.writeText(this.editor.getSelection());
   },
 
-  _paste: function () {
+  _onPaste: function () {
     this.editor.replaceSelection(clipboard.readText());
   },
 
