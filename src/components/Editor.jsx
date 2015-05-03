@@ -78,17 +78,19 @@ var Editor = module.exports = React.createClass({
 
     // We need to override the copy/paste operation keyboard
     // shortcuts to work with the context menu
-    if (process.platform != 'darwin') {
+    if (process.platform === 'darwin') {
       this.editor.setOption("extraKeys", {
         "Cmd-C": this._copy,
         "Cmd-V": this._paste,
-        "Cmd-X": this._cut
+        "Cmd-X": this._cut,
+        "Cmd-S": this._onSave
       });
     } else {
       this.editor.setOption("extraKeys", {
         "Ctrl-C": this._copy,
         "Ctrl-V": this._paste,
-        "Ctrl-X": this._cut
+        "Ctrl-X": this._cut,
+        "Ctrl-S": this._onSave
       });
     }
 
