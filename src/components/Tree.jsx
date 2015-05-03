@@ -17,10 +17,6 @@ var React           = require("react"),
 var Tree = module.exports = React.createClass({
   mixins: [PureRenderMixin],
 
-  componentDidMount: function () {
-    TreeActions.init(".");
-  },
-
   render: function () {
     if (!this.props.rootNode) return null;
 

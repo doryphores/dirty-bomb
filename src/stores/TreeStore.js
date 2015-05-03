@@ -34,18 +34,22 @@ var CHANGE_EVENT = "change";
 
 /**
  * Initialises the root node
- * @param  {String|Array} pathsToExpand List of paths to expand
  */
-function init(pathsToExpand) {
+function init() {
   _tree = makeNode({
     name: path.basename(_contentDir),
     path: ".",
     type: "folder"
   });
 
-  if (pathsToExpand) {
-    _.flatten([pathsToExpand]).forEach(expandNode);
-  }
+  // Restore expanded nodes
+  _.reduce(_expandedPaths.sort(), function (parents, p) {
+    if (_.contains(parents, path.dirname(p))) {
+      expandNode(p);
+      parents.push(p);
+    }
+    return parents;
+  }, ["."]);
 }
 
 /**
@@ -66,12 +70,12 @@ function makeNode(node, address) {
     node.type = fs.statSync(absolute(node.path)).isDirectory() ? "folder" : "file";
   }
 
+  node.selected = false;
+
   if (node.type === "folder") {
     node.children = Immutable.List([]);
-    node.expanded = false;
+    node.expanded = _.contains(_expandedPaths, node.path);
   }
-
-  node.selected = false;
 
   return Immutable.Map(node);
 }
@@ -195,14 +199,22 @@ function expandNode(nodePath) {
     }, nodePaths);
   }
 
+  // Expand parents
   nodePaths.forEach(function (p) {
-    var address = _nodeMap[p];
     if (!_.contains(_expandedPaths, p)) {
-      _tree = _tree.setIn(address.concat("expanded"), true);
+      _tree = _tree.setIn(_nodeMap[p].concat("expanded"), true);
       _expandedPaths.push(p);
     }
     reloadNode(p);
     watchNode(p);
+  });
+
+  // Reload expanded children
+  findNode(nodePath).get("children").forEach(function (n) {
+    if (n.get("expanded")) {
+      reloadNode(n.get("path"));
+      watchNode(n.get("path"));
+    }
   });
 }
 
@@ -343,9 +355,7 @@ TreeStore.dispatchToken = AppDispatcher.register(function (action) {
     case "app_init":
       AppDispatcher.waitFor([SettingsStore.dispatchToken]);
       _contentDir = SettingsStore.getContentPath();
-      break;
-    case "tree_init":
-      init(action.pathsToExpand);
+      init();
       TreeStore.emitChange();
       break;
     case "tree_expand":
