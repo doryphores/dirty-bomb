@@ -1,20 +1,56 @@
-var fs            = require("fs-extra"),
-    path          = require("path"),
-    PathWatcher   = require("pathwatcher"),
-    Immutable     = require("immutable"),
-    shell         = require("shell"),
-    AppDispatcher = require("../dispatcher/AppDispatcher"),
-    SettingsStore = require("./SettingsStore"),
-    EditorActions = require("../actions/EditorActions");
+var fs                = require("fs-extra"),
+    path              = require("path"),
+    Immutable         = require("immutable"),
+    shell             = require("shell"),
+    SettingsStore     = require("./SettingsStore"),
+    EditorActions     = require("../actions/EditorActions"),
+    FileSystemStore   = require("./FileSystemStore"),
+    FileSystemActions = require("../actions/FileSystemActions");
 
 var _contentDir = SettingsStore.getContentPath();;
 
 var _files = Immutable.List();
 var _activeFile = "";
-var _watchers = {};
 
 var EditorStore = Reflux.createStore({
   listenables: EditorActions,
+
+  init: function () {
+    this.listenTo(FileSystemStore, this.onFSChange);
+  },
+
+  onFSChange: function (fsEvent) {
+    var nodePath = path.relative(_contentDir, fsEvent.nodePath);
+    var fileIndex = getFileIndex(nodePath);
+    if (fileIndex === -1) return;
+    if (fsEvent.event === "deleted") {
+      // File was deleted
+      if (_files.getIn([fileIndex, "clean"])) {
+        // File is clean so close the tab
+        closeFile(nodePath);
+      } else {
+        // File was dirty so clear disk content
+        _files = _files.update(fileIndex, function (file) {
+          return file.merge({
+            diskContent: "",
+            clean: false
+          });
+        });
+      }
+    } else {
+      // File changed on disk so update disk content and update
+      // content if file was clean
+      _files = _files.update(fileIndex, function (file) {
+        var newContent = file.get("clean") ? fsEvent.content : file.get("content");
+        return file.merge({
+          diskContent: fsEvent.content,
+          content: newContent,
+          clean: newContent === fsEvent.content
+        });
+      });
+    }
+    this.emitChange();
+  },
 
   getInitialState: function () {
     return _files;
@@ -72,6 +108,9 @@ module.exports = EditorStore;
    Private functions
 \* ======================================== */
 
+function absolute(filePath) {
+  return path.join(_contentDir, filePath);
+}
 
 function getFileIndex(filePath) {
   return _files.findIndex(function (file) {
@@ -105,8 +144,7 @@ function openFile(filePath, done) {
       _activeFile = filePath;
 
       // Start watching the file
-      addWatcher(filePath);
-
+      FileSystemActions.watch(absolute(filePath));
       done();
     });
   }
@@ -141,7 +179,7 @@ function closeFile(filePath) {
 
   _files = _files.remove(fileIndex);
 
-  removeWatcher(filePath);
+  FileSystemActions.unwatch(absolute(filePath));
 }
 
 function updateFile(filePath, content) {
@@ -158,7 +196,7 @@ function saveFile(filePath, done) {
   var content = _files.getIn([fileIndex, "content"]);
 
   // Stop the watcher while we save
-  removeWatcher(filePath);
+  FileSystemActions.unwatch(absolute(filePath));
 
   fs.outputFile(
     path.join(_contentDir, filePath),
@@ -172,7 +210,7 @@ function saveFile(filePath, done) {
         });
       });
       // Restart the watcher
-      addWatcher(filePath);
+      FileSystemActions.watch(absolute(filePath));
       done();
     }
   );
@@ -181,76 +219,4 @@ function saveFile(filePath, done) {
 function deleteFile(filePath) {
   closeFile(filePath);
   shell.moveItemToTrash(path.join(_contentDir, filePath));
-}
-
-
-/* ============================================== *\
-   Watcher helper class
-\* ============================================== */
-
-var Watcher = function (filePath) {
-  this.filePath = filePath;
-  this.start();
-};
-
-Watcher.prototype.start = function () {
-  this.watcher = PathWatcher.watch(path.join(_contentDir, this.filePath),
-    this.updateFromDisk.bind(this));
-};
-
-Watcher.prototype.stop = function () {
-  this.watcher.close();
-  delete this.watcher;
-};
-
-Watcher.prototype.updateFromDisk = function () {
-  fs.readFile(path.join(_contentDir, this.filePath), {
-    encoding: "utf-8"
-  }, function (err, fileContent) {
-    var fileIndex = getFileIndex(this.filePath);
-    if (err) {
-      // File was deleted
-      if (_files.getIn([fileIndex, "clean"])) {
-        // File is clean so close the tab
-        closeFile(this.filePath);
-      } else {
-        // File was dirty so clear disk content
-        _files = _files.update(fileIndex, function (file) {
-          return file.merge({
-            diskContent: "",
-            clean: false
-          });
-        });
-
-        // Remove the watcher
-        removeWatcher(this.filePath);
-      }
-    } else {
-      // File changed on disk so update disk content and update
-      // content if file was clean
-      _files = _files.update(fileIndex, function (file) {
-        var newContent = file.get("clean") ? fileContent : file.get("content");
-        return file.merge({
-          diskContent: fileContent,
-          content: newContent,
-          clean: newContent === fileContent
-        });
-      });
-    }
-    EditorStore.emitChange();
-  }.bind(this));
-};
-
-function removeWatcher(filePath) {
-  if (_watchers[filePath]) {
-    _watchers[filePath].stop();
-    delete _watchers[filePath];
-  }
-}
-
-function addWatcher(filePath) {
-  if (_watchers[filePath]) {
-    removeWatcher(filePath);
-  }
-  _watchers[filePath] = new Watcher(filePath);
 }
