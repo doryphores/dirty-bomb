@@ -9,7 +9,9 @@ var fs            = require("fs-extra"),
     shell         = require("shell"),
     AppDispatcher = require("../dispatcher/AppDispatcher"),
     EditorActions = require("../actions/EditorActions"),
-    SettingsStore = require("./SettingsStore");
+    SettingsStore = require("./SettingsStore"),
+    LocalStorageStore = require("./LocalStorageStore"),
+    LocalStorageActions = require("../actions/LocalStorageActions");
 
 
 /*=============================================*\
@@ -36,6 +38,9 @@ var CHANGE_EVENT = "change";
  * Initialises the root node
  */
 function init() {
+  // TODO: get this from AppInit action
+  _expandedPaths = LocalStorageStore.get("tree.expandedPaths") || ["."];
+
   _tree = makeNode({
     name: path.basename(_contentDir),
     path: ".",
@@ -332,6 +337,7 @@ var TreeStore = assign({}, EventEmitter.prototype, {
   },
 
   emitChange: function () {
+    LocalStorageActions.save("tree.expandedPaths", _expandedPaths);
     this.emit(CHANGE_EVENT);
   },
 
