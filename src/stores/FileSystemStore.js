@@ -15,6 +15,50 @@ var FileSystemStore = Reflux.createStore({
   },
 
   onWatch: function (nodePath) {
+    this._watch(nodePath);
+  },
+
+  onUnwatch: function (nodePath) {
+    this._unwatch(nodePath);
+  },
+
+  onCreate: function (nodePath, content) {
+    fs.outputFile(nodePath, content);
+  },
+
+  onOpen: function (nodePath) {
+    fs.readFile(nodePath, {
+      encoding: "utf-8"
+    }, function (err, fileContent) {
+      this.trigger({
+        nodePath: nodePath,
+        event: "opened",
+        content: fileContent
+      });
+      this._watch(nodePath);
+    }.bind(this));
+  },
+
+  onSave: function (nodePath, content) {
+    this._unwatch(nodePath);
+    fs.outputFile(nodePath, content, function (err) {
+      if (err) return console.log(err);
+
+      this.trigger({
+        nodePath: nodePath,
+        event: "changed",
+        content: content
+      });
+
+      this._watch(nodePath);
+    }.bind(this));
+  },
+
+  onDelete: function (nodePath) {
+    shell.moveItemToTrash(nodePath);
+  },
+
+  _watch: function (nodePath) {
     if (_watchers[nodePath]) {
       _watchers[nodePath].close();
     }
@@ -22,23 +66,11 @@ var FileSystemStore = Reflux.createStore({
       this._onNodeChange.bind(this, nodePath));
   },
 
-  onUnwatch: function (nodePath) {
+  _unwatch: function (nodePath) {
     if (_watchers[nodePath]) {
       _watchers[nodePath].close();
       delete _watchers[nodePath];
     }
-  },
-
-  onCreate: function (nodePath, content) {
-    fs.outputFile(nodePath, content);
-  },
-
-  onSave: function (nodePath, content) {
-    fs.outputFile(nodePath, content);
-  },
-
-  onDelete: function (nodePath) {
-    shell.moveItemToTrash(nodePath);
   },
 
   _onNodeChange: function (nodePath) {
@@ -47,8 +79,7 @@ var FileSystemStore = Reflux.createStore({
       encoding: "utf-8"
     }, function (err, content) {
       if (err) {
-        _watchers[nodePath].close();
-        delete _watchers[nodePath];
+        this._unwatch(nodePath);
         this.trigger({
           nodePath: nodePath,
           event: "deleted"
