@@ -7,7 +7,7 @@ var fs                = require("fs-extra"),
     FileSystemStore   = require("./FileSystemStore"),
     FileSystemActions = require("../actions/FileSystemActions");
 
-var _contentDir = SettingsStore.getContentPath();;
+var _contentDir = SettingsStore.getContentPath();
 
 var _files = Immutable.List();
 var _activeFile = "";
@@ -54,10 +54,6 @@ var EditorStore = Reflux.createStore({
 
   getInitialState: function () {
     return _files;
-  },
-
-  getFile: function (filePath) {
-    return _files.get(getFileIndex(filePath));
   },
 
   onOpen: function (filePath) {

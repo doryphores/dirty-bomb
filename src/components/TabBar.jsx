@@ -30,9 +30,9 @@ var TabBar = React.createClass({
 
   _onClick: function (file, event) {
     if (event.target.classList.contains("js-close")) {
-      this.props.onClose(file.get("path"));
+      this.props.onClose(file);
     } else {
-      this.props.onChangeFocus(file.get("path"));
+      this.props.onChangeFocus(file);
     }
   }
 });

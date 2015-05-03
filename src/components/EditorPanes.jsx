@@ -16,7 +16,7 @@ var EditorPanes = React.createClass({
         <Editor
           key={file.get("path")}
           file={file}
-          onClose={this._onClose.bind(this, file.get("path"))} />
+          onClose={this._onClose.bind(this, file)} />
       );
     }.bind(this));
 
@@ -35,14 +35,13 @@ var EditorPanes = React.createClass({
     );
   },
 
-  _onChangeFocus: function (filePath) {
-    EditorActions.focus(filePath);
+  _onChangeFocus: function (file) {
+    EditorActions.focus(file.get("path"));
   },
 
-  _onClose: function (filePath) {
-    var file = EditorStore.getFile(filePath);
+  _onClose: function (file) {
     if (file.get("clean")) {
-      EditorActions.close(filePath);
+      EditorActions.close(file.get("path"));
     } else {
       Dialogs.confirm({
         message: "'" + file.get("name") + "' has changes. Do you want to save the changes before closing?",
@@ -50,10 +49,10 @@ var EditorPanes = React.createClass({
       }, function (button) {
         switch (button) {
           case 0:
-            EditorActions.save(filePath, true);
+            EditorActions.save(file.get("path"), true);
             break;
           case 2:
-            EditorActions.close(filePath);
+            EditorActions.close(file.get("path"));
             break;
           default:
             // no op
