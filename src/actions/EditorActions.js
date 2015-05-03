@@ -3,7 +3,7 @@ Reflux = require("reflux");
 var EditorActions = Reflux.createActions([
   "open",
   "focus",
-  "change",
+  "update",
   "close",
   "save",
   "delete"

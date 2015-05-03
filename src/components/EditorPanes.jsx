@@ -11,6 +11,8 @@ var EditorPanes = React.createClass({
   mixins: [PureRenderMixin, Reflux.connect(EditorStore, "files")],
 
   render: function() {
+    if (this.state.files.size === 0) return null;
+
     var editors = this.state.files.map(function (file) {
       return (
         <Editor
@@ -19,8 +21,6 @@ var EditorPanes = React.createClass({
           onClose={this._onClose.bind(this, file)} />
       );
     }.bind(this));
-
-    if (editors.size === 0) return null;
 
     return (
       <div className="panel-container vertical">

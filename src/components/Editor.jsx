@@ -148,7 +148,7 @@ var Editor = module.exports = React.createClass({
   },
 
   _onChange: function () {
-    EditorActions.change(this.props.file.get("path"), this.editor.getValue());
+    EditorActions.update(this.props.file.get("path"), this.editor.getValue());
   },
 
   _showContextMenu: function () {
