@@ -1,17 +1,18 @@
-var React           = require("react"),
-    PureRenderMixin = require("react/addons").addons.PureRenderMixin,
-    Showdown        = require("showdown"),
-    path            = require("path"),
-    CodeMirror      = require("codemirror"),
-    classNames      = require("classnames"),
-    Dialogs         = require("../Dialogs"),
-    EditorActions   = require("../actions/EditorActions"),
-    ImageActions    = require("../actions/ImageActions"),
-    ImageStore      = require("../stores/ImageStore"),
-    SettingsStore   = require("../stores/SettingsStore"),
-    remote          = require("remote"),
-    Menu            = remote.require("menu"),
-    clipboard       = require("clipboard");
+var React             = require("react"),
+    PureRenderMixin   = require("react/addons").addons.PureRenderMixin,
+    Showdown          = require("showdown"),
+    path              = require("path"),
+    CodeMirror        = require("codemirror"),
+    classNames        = require("classnames"),
+    Dialogs           = require("../Dialogs"),
+    EditorActions     = require("../actions/EditorActions"),
+    FileSystemActions = require("../actions/FileSystemActions"),
+    ImageActions      = require("../actions/ImageActions"),
+    ImageStore        = require("../stores/ImageStore"),
+    SettingsStore     = require("../stores/SettingsStore"),
+    remote            = require("remote"),
+    Menu              = remote.require("menu"),
+    clipboard         = require("clipboard");
 
 require("codemirror/mode/markdown/markdown");
 require("codemirror/mode/yaml/yaml");
@@ -218,7 +219,7 @@ var Editor = module.exports = React.createClass({
       detail: "Your are deleting '" + filePath + "'.",
       buttons: ["Cancel", "Move to trash"]
     }, function (button) {
-      if (button === 1) EditorActions.delete(filePath);
+      if (button === 1) FileSystemActions.delete(filePath);
     });
   },
 

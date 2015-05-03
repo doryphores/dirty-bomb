@@ -1,13 +1,14 @@
-var React           = require("react"),
-    PureRenderMixin = require("react/addons").addons.PureRenderMixin,
-    classNames      = require("classnames"),
-    SettingsStore   = require("../stores/SettingsStore"),
-    TreeActions     = require("../actions/TreeActions"),
-    EditorActions   = require("../actions/EditorActions");
-    path            = require("path"),
-    Dialogs         = require("../Dialogs"),
-    remote          = require("remote"),
-    Menu            = remote.require("menu");
+var React             = require("react"),
+    PureRenderMixin   = require("react/addons").addons.PureRenderMixin,
+    classNames        = require("classnames"),
+    SettingsStore     = require("../stores/SettingsStore"),
+    TreeActions       = require("../actions/TreeActions"),
+    EditorActions     = require("../actions/EditorActions"),
+    FileSystemActions = require("../actions/FileSystemActions"),
+    path              = require("path"),
+    Dialogs           = require("../Dialogs"),
+    remote            = require("remote"),
+    Menu              = remote.require("menu");
 
 
 /*=============================================*\
@@ -178,7 +179,7 @@ Tree.Node = React.createClass({
             details: "Your are deleting '" + nodePath + "'.",
             buttons: ["Cancel", "Move to trash"]
           }, function (button) {
-            if (button === 1) EditorActions.delete(nodePath);
+            if (button === 1) FileSystemActions.delete(nodePath);
           });
         }
       }

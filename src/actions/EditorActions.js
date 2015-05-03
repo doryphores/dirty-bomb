@@ -5,8 +5,7 @@ var EditorActions = Reflux.createActions([
   "focus",
   "update",
   "close",
-  "save",
-  "delete"
+  "save"
 ]);
 
 module.exports = EditorActions;

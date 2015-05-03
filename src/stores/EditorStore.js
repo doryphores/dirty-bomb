@@ -75,10 +75,6 @@ var EditorStore = Reflux.createStore({
     this.emitChange();
   },
 
-  onDelete: function (filePath) {
-    FileSystemActions.delete(filePath);
-  },
-
   _onFSChange: function (fsEvent) {
     var filePath = fsEvent.nodePath;
     var fileIndex = getFileIndex(filePath);
