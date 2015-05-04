@@ -7,6 +7,12 @@ var React        = require("react"),
 var ImageSelector = React.createClass({
   mixins: [Reflux.connect(ImageStore)],
 
+  componentDidUpdate: function(prevProps, prevState) {
+    if (!prevState.open) {
+      this.refs.imageList.getDOMNode().scrollTop = 0;
+    }
+  },
+
   render: function() {
     var images = this.state.images.map(function (image) {
       return (
@@ -38,7 +44,7 @@ var ImageSelector = React.createClass({
             <span className="button__icon icon-plus" />
           </button>
         </div>
-        <ul className="image-list">
+        <ul className="image-list" ref="imageList">
           {images}
         </ul>
       </div>

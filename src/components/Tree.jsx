@@ -220,7 +220,7 @@ var LabelInput = React.createClass({
   },
 
   componentDidMount: function() {
-    var inputElement = React.findDOMNode(this.refs.input);
+    var inputElement = this.refs.input.getDOMNode();
     var extIndex = this.props.filename.lastIndexOf(".md");
     inputElement.setSelectionRange(0,
       extIndex > -1 ? extIndex : this.props.filename.length);
