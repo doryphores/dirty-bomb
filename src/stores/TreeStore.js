@@ -212,34 +212,24 @@ function tidyDeletedNode(nodePath) {
 
 /**
  * Expands a node:
- *  - ensures the node's parents are expanded
  *  - marks it as expanded
  *  - reloads its children
  *  - starts watching file system for changes
  * @param {String} nodePath
  */
 function expandNode(nodePath) {
-  var nodePaths = ["."];
-
-  if (nodePath !== ".") {
-    nodePaths = _.reduce(nodePath.split("/"), function (nodePaths, p) {
-      return nodePaths.concat(path.join(_.last(nodePaths), p));
-    }, nodePaths);
+  if (!_.contains(_expandedPaths, nodePath)) {
+    _expandedPaths.push(nodePath);
   }
 
-  // Expand parents
-  nodePaths.forEach(function (p) {
-    if (!_.contains(_expandedPaths, p)) {
-      _tree = _tree.setIn(_nodeMap[p].concat("expanded"), true);
-      _expandedPaths.push(p);
-    }
-    reloadNode(p, FileSystem.openDir(p));
-  });
+  _tree = _tree.setIn(_nodeMap[nodePath].concat("expanded"), true);
 
-  // Reload expanded children
+  reloadNode(nodePath, FileSystem.openDir(nodePath));
+
+  // Reload expanded children recursively
   findNode(nodePath).get("children").forEach(function (n) {
     if (n.get("expanded")) {
-      reloadNode(n.get("path"), FileSystem.openDir(n.get("path")));
+      expandNode(n.get("path"));
     }
   });
 }
