@@ -43,7 +43,7 @@ var EditorStore = Reflux.createStore({
           active      : true
         }));
 
-        _activeFile = filePath;
+        setActiveFile(filePath);
 
         this.emitChange();
       }.bind(this));
@@ -72,7 +72,7 @@ var EditorStore = Reflux.createStore({
 
     if (filePath === _activeFile) {
       if (_files.size === 1) {
-        _activeFile = "";
+        setActiveFile("");
       } else {
         setIndexAsActive(fileIndex ? fileIndex - 1 : 1);
       }
@@ -154,7 +154,14 @@ function setIndexAsActive(fileIndex) {
     _files = _files.setIn([getFileIndex(_activeFile), "active"], false);
   }
   _files = _files.update(fileIndex, function (file) {
-    _activeFile = file.get("path");
+    setActiveFile(file.get("path"));
     return file.set("active", true);
   });
+}
+
+function setActiveFile(filePath) {
+  if (_activeFile !== filePath) {
+    _activeFile = filePath;
+    if (_activeFile) TreeActions.select(_activeFile);
+  }
 }
