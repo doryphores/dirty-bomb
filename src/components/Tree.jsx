@@ -1,14 +1,14 @@
-var React             = require("react"),
-    PureRenderMixin   = require("react/addons").addons.PureRenderMixin,
-    classNames        = require("classnames"),
-    SettingsStore     = require("../stores/SettingsStore"),
-    TreeActions       = require("../actions/TreeActions"),
-    EditorActions     = require("../actions/EditorActions"),
-    FileSystemActions = require("../actions/FileSystemActions"),
-    path              = require("path"),
-    Dialogs           = require("../Dialogs"),
-    remote            = require("remote"),
-    Menu              = remote.require("menu");
+var React           = require("react"),
+    PureRenderMixin = require("react/addons").addons.PureRenderMixin,
+    Reflux          = require("reflux"),
+    classNames      = require("classnames"),
+    SettingsStore   = require("../stores/SettingsStore"),
+    TreeStore       = require("../stores/TreeStore"),
+    TreeActions     = require("../actions/TreeActions"),
+    EditorActions   = require("../actions/EditorActions"),
+    path            = require("path"),
+    remote          = require("remote"),
+    Menu            = remote.require("menu");
 
 
 /*=============================================*\
@@ -16,10 +16,10 @@ var React             = require("react"),
 \*=============================================*/
 
 var Tree = module.exports = React.createClass({
-  mixins: [PureRenderMixin],
+  mixins: [PureRenderMixin, Reflux.connect(TreeStore, "tree")],
 
   render: function () {
-    if (!this.props.rootNode) return null;
+    if (!this.state.tree) return null;
 
     return (
       <div className="tree">
@@ -28,7 +28,7 @@ var Tree = module.exports = React.createClass({
             <Tree.Node
               key="root"
               readOnly={true}
-              node={this.props.rootNode} />
+              node={this.state.tree} />
           </ul>
         </div>
         <div
@@ -174,13 +174,7 @@ Tree.Node = React.createClass({
       {
         label: "Delete",
         click: function () {
-          Dialogs.confirm({
-            message: "Are you sure you want to delete the selected item?",
-            details: "Your are deleting '" + nodePath + "'.",
-            buttons: ["Cancel", "Move to trash"]
-          }, function (button) {
-            if (button === 1) FileSystemActions.delete(nodePath);
-          });
+          TreeActions.delete(nodePath);
         }
       }
     ]);
@@ -207,17 +201,7 @@ Tree.Node = React.createClass({
   },
 
   _move: function () {
-    var contentRoot = SettingsStore.getContentPath();
-    Dialogs.promptForDirectory({
-      defaultPath: path.join(contentRoot, path.dirname(this.props.node.get("path")))
-    }, function (filename) {
-      if (filename) {
-        if (filename.indexOf(contentRoot) === 0) {
-          TreeActions.move(this.props.node.get("path"),
-            path.join(path.relative(contentRoot, filename), this.props.node.get("name")));
-        }
-      }
-    }.bind(this));
+    TreeActions.move(this.props.node.get("path"));
   },
 
   _rename: function (filename) {

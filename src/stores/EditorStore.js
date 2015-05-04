@@ -1,8 +1,8 @@
-var path              = require("path"),
-    Immutable         = require("immutable"),
-    FileSystemStore   = require("./FileSystemStore"),
-    EditorActions     = require("../actions/EditorActions"),
-    FileSystemActions = require("../actions/FileSystemActions");
+var path          = require("path"),
+    Immutable     = require("immutable"),
+    EditorActions = require("../actions/EditorActions"),
+    TreeActions   = require("../actions/TreeActions"),
+    FileSystem    = require("../services/FileSystem");
 
 var _files = Immutable.List();
 var _activeFile = "";
@@ -12,7 +12,8 @@ var EditorStore = Reflux.createStore({
 
   init: function () {
     // Listen to file system changes
-    this.listenTo(FileSystemStore, this._onFSChange);
+    this.listenTo(FileSystem.fileChange, this._onFSChange);
+    this.listenTo(TreeActions.create.completed, this.onOpen);
   },
 
   getInitialState: function () {
@@ -29,7 +30,24 @@ var EditorStore = Reflux.createStore({
       setIndexAsActive(fileIndex);
       this.emitChange();
     } else {
-      FileSystemActions.open(filePath);
+      FileSystem.open(filePath, function (content) {
+        if (_activeFile) {
+          _files = _files.setIn([getFileIndex(_activeFile), "active"], false);
+        }
+
+        _files = _files.push(Immutable.Map({
+          name        : path.basename(filePath),
+          path        : filePath,
+          diskContent : content,
+          content     : content,
+          clean       : true,
+          active      : true
+        }));
+
+        _activeFile = filePath;
+
+        this.emitChange();
+      }.bind(this));
     }
   },
 
@@ -63,16 +81,20 @@ var EditorStore = Reflux.createStore({
 
     _files = _files.remove(fileIndex);
 
-    FileSystemActions.unwatch(filePath);
+    FileSystem.close(filePath);
 
     this.emitChange();
   },
 
   onSave: function (filePath, close) {
     var content = _files.getIn([getFileIndex(filePath), "content"]);
-    FileSystemActions.save(filePath, content);
+    FileSystem.save(filePath, content);
     if (close) this.onClose(filePath);
     this.emitChange();
+  },
+
+  onDelete: function (filePath) {
+    FileSystem.delete(filePath);
   },
 
   _onFSChange: function (fsEvent) {
@@ -107,22 +129,6 @@ var EditorStore = Reflux.createStore({
             clean: newContent === fsEvent.content
           });
         });
-        break;
-      case "opened":
-        if (_activeFile) {
-          _files = _files.setIn([getFileIndex(_activeFile), "active"], false);
-        }
-
-        _files = _files.push(Immutable.Map({
-          name        : path.basename(filePath),
-          path        : filePath,
-          diskContent : fsEvent.content,
-          content     : fsEvent.content,
-          clean       : true,
-          active      : true
-        }));
-
-        _activeFile = filePath;
         break;
       default:
         // no op

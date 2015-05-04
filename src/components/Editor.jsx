@@ -1,18 +1,16 @@
-var React             = require("react"),
-    PureRenderMixin   = require("react/addons").addons.PureRenderMixin,
-    Showdown          = require("showdown"),
-    path              = require("path"),
-    CodeMirror        = require("codemirror"),
-    classNames        = require("classnames"),
-    Dialogs           = require("../Dialogs"),
-    EditorActions     = require("../actions/EditorActions"),
-    FileSystemActions = require("../actions/FileSystemActions"),
-    ImageActions      = require("../actions/ImageActions"),
-    ImageStore        = require("../stores/ImageStore"),
-    SettingsStore     = require("../stores/SettingsStore"),
-    remote            = require("remote"),
-    Menu              = remote.require("menu"),
-    clipboard         = require("clipboard");
+var React           = require("react"),
+    PureRenderMixin = require("react/addons").addons.PureRenderMixin,
+    Showdown        = require("showdown"),
+    path            = require("path"),
+    CodeMirror      = require("codemirror"),
+    classNames      = require("classnames"),
+    EditorActions   = require("../actions/EditorActions"),
+    ImageActions    = require("../actions/ImageActions"),
+    ImageStore      = require("../stores/ImageStore"),
+    SettingsStore   = require("../stores/SettingsStore"),
+    remote          = require("remote"),
+    Menu            = remote.require("menu"),
+    clipboard       = require("clipboard");
 
 require("codemirror/mode/markdown/markdown");
 require("codemirror/mode/yaml/yaml");
@@ -186,9 +184,7 @@ var Editor = module.exports = React.createClass({
       },
       {
         label: "Insert image",
-        click: function () {
-          this._selectImage();
-        }.bind(this)
+        click: this._selectImage
       }
     ]);
     menu.popup(remote.getCurrentWindow());
@@ -212,15 +208,7 @@ var Editor = module.exports = React.createClass({
   },
 
   _onDelete: function () {
-    var filePath = this.props.file.get("path");
-
-    Dialogs.confirm({
-      message: "Are you sure you want to delete this file?",
-      detail: "Your are deleting '" + filePath + "'.",
-      buttons: ["Cancel", "Move to trash"]
-    }, function (button) {
-      if (button === 1) FileSystemActions.delete(filePath);
-    });
+    EditorActions.delete(this.props.file.get("path"));
   },
 
   _selectImage: function () {

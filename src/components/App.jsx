@@ -4,7 +4,6 @@ var React         = require("react"),
     ImageSelector = require("./ImageSelector"),
     SetupPanel    = require("./SetupPanel"),
     EditorPanes   = require("./EditorPanes"),
-    TreeStore     = require("../stores/TreeStore"),
     ImageStore    = require("../stores/ImageStore"),
     SettingsStore = require("../stores/SettingsStore"),
     RepoStore     = require("../stores/RepoStore"),
@@ -13,7 +12,6 @@ var React         = require("react"),
 function getAppState() {
   return {
     ready: SettingsStore.isReady() && RepoStore.isReady(),
-    treeRootNode: TreeStore.getNode("."),
     imageSelectorOpen: ImageStore.getState().open,
     images: ImageStore.getState().images
   };
@@ -27,7 +25,6 @@ var App = React.createClass({
   componentDidMount: function() {
     SettingsStore.addChangeListener(this._onChange);
     RepoStore.addChangeListener(this._onChange);
-    TreeStore.addChangeListener(this._onChange);
     ImageStore.addChangeListener(this._onChange);
 
     AppActions.init();
@@ -44,7 +41,7 @@ var App = React.createClass({
     if (this.state.ready) {
       return (
         <div className="panel-container horizontal">
-          <Tree rootNode={this.state.treeRootNode} />
+          <Tree />
           <div className="workspace panel-container vertical">
             <ToolBar />
             <EditorPanes />

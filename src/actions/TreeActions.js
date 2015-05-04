@@ -1,56 +1,15 @@
-var AppDispatcher = require("../dispatcher/AppDispatcher");
+var Reflux = require("reflux");
 
-var TreeActions = {
-  expand: function (nodePath) {
-    AppDispatcher.dispatch({
-      actionType: "tree_expand",
-      nodePath: nodePath
-    });
-  },
+var TreeActions = Reflux.createActions([
+  "expand",
+  "collapse",
+  "toggle",
+  "select",
+  "rename",
+  "move",
+  "delete"
+]);
 
-  collapse: function (nodePath) {
-    AppDispatcher.dispatch({
-      actionType: "tree_collapse",
-      nodePath: nodePath
-    });
-  },
-
-  toggle: function (nodePath) {
-    AppDispatcher.dispatch({
-      actionType: "tree_toggle",
-      nodePath: nodePath
-    });
-  },
-
-  select: function (nodePath) {
-    AppDispatcher.dispatch({
-      actionType: "tree_select",
-      nodePath: nodePath
-    });
-  },
-
-  create: function (savePath) {
-    AppDispatcher.dispatch({
-      actionType: "tree_create",
-      savePath: savePath
-    });
-  },
-
-  rename: function (nodePath, filename) {
-    AppDispatcher.dispatch({
-      actionType: "tree_rename",
-      nodePath: nodePath,
-      filename: filename
-    });
-  },
-
-  move: function (nodePath, newPath) {
-    AppDispatcher.dispatch({
-      actionType: "tree_move",
-      nodePath: nodePath,
-      newPath: newPath
-    });
-  }
-};
+TreeActions.create = Reflux.createAction({asyncResult: true});
 
 module.exports = TreeActions;

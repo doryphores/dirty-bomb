@@ -1,37 +1,92 @@
-var fs            = require("fs-extra"),
-    path          = require("path"),
-    assign        = require("object-assign"),
-    EventEmitter  = require("events").EventEmitter,
-    Immutable     = require("immutable"),
-    _             = require("underscore"),
-    PathWatcher   = require("pathwatcher"),
-    Dialogs       = require("../Dialogs"),
-    AppDispatcher = require("../dispatcher/AppDispatcher"),
-    EditorActions = require("../actions/EditorActions"),
-    SettingsStore = require("./SettingsStore"),
-    LocalStorageStore = require("./LocalStorageStore"),
-    LocalStorageActions = require("../actions/LocalStorageActions");
+var Reflux            = require("reflux"),
+    Immutable         = require("immutable"),
+    _                 = require("underscore"),
+    AppDispatcher     = require("../dispatcher/AppDispatcher"),
+    SettingsStore     = require("../stores/SettingsStore"),
+    FileSystem        = require("../services/FileSystem"),
+    TreeActions       = require("../actions/TreeActions"),
+    LocalStorageStore = require("./LocalStorageStore");
 
-
-/*=============================================*\
-  Private properties
-\*=============================================*/
-
-var _contentDir;
-var _ignoredFiles = [".DS_Store", "Thumbs.db", ".git"];
-
-var _tree;                  // The immutable node tree
-var _nodeMap = {};          // To store path -> address mappings
-var _watchers = {};         // To store pathwatchers
-var _expandedPaths = [];    // To keep track of which paths are expanded
+var _tree;
+var _expandedPaths = ["."];
+var _nodeMap = {};
 var _selectedNodePath = ""; // The currently selected node
 
-var CHANGE_EVENT = "change";
+var TreeStore = Reflux.createStore({
+  listenables: TreeActions,
 
+  init: function () {
+    this.listenTo(FileSystem.dirChange, this._onFSChange);
+    AppDispatcher.register(function (action) {
+      if (action.actionType === "app_init") {
+        AppDispatcher.waitFor([SettingsStore.dispatchToken]);
+        init();
+      }
+    });
+    // this.listenTo(LocalStorageStore, this._init);
+  },
 
-/*=============================================*\
-  Private methods
-\*=============================================*/
+  getInitialState: function () {
+    return _tree;
+  },
+
+  onExpand: function (nodePath) {
+    expandNode(nodePath);
+    this.emitChange();
+  },
+
+  onCollapse: function (nodePath) {
+    collapseNode(nodePath);
+    this.emitChange();
+  },
+
+  onToggle: function (nodePath) {
+    if (findNode(nodePath).get("expanded")) {
+      this.onCollapse(nodePath);
+    } else {
+      this.onExpand(nodePath);
+    }
+  },
+
+  onSelect: function (nodePath) {
+    selectNode(nodePath);
+    this.emitChange();
+  },
+
+  onCreate: function (dirPath) {
+    FileSystem.create(dirPath, function (filePath) {
+      TreeActions.create.completed(filePath);
+    });
+  },
+
+  onRename: function (nodePath, name) {
+    FileSystem.rename(nodePath, name);
+  },
+
+  onMove: function (nodePath) {
+    FileSystem.move(nodePath);
+  },
+
+  onDelete: function (filePath) {
+    FileSystem.delete(filePath);
+  },
+
+  _onFSChange: function (fsEvent) {
+    reloadNode(fsEvent.nodePath, fsEvent.nodeList);
+    this.emitChange();
+  },
+
+  emitChange: function () {
+    // TODO: this is a hack, use a service if possible
+    LocalStorageStore.set("tree.expandedPaths", _expandedPaths);
+
+    this.trigger(_tree);
+  }
+});
+
+module.exports = TreeStore;
+
+// Private methods
 
 /**
  * Initialises the root node
@@ -41,7 +96,7 @@ function init() {
   _expandedPaths = LocalStorageStore.get("tree.expandedPaths") || ["."];
 
   _tree = makeNode({
-    name: path.basename(_contentDir),
+    name: FileSystem.getRootName(),
     path: ".",
     type: "folder"
   });
@@ -56,6 +111,10 @@ function init() {
   }, ["."]);
 }
 
+function findNode(nodePath) {
+  return _tree.getIn(_nodeMap[nodePath]);
+}
+
 /**
  * Creates an immutable version of the give node:
  *  - gets its type if unknown
@@ -64,15 +123,8 @@ function init() {
  * @param {Array}  address
  */
 function makeNode(node, address) {
-  address = address || [];
-
   // Map the node's address
-  _nodeMap[node.path] = address;
-
-  // Get node type from disk if unknown
-  if (node.type === undefined) {
-    node.type = fs.statSync(absolute(node.path)).isDirectory() ? "folder" : "file";
-  }
+  _nodeMap[node.path] = address || [];
 
   node.selected = false;
 
@@ -90,30 +142,22 @@ function makeNode(node, address) {
  *  - adds new nodes
  * @param {String} nodePath
  */
-function reloadNode(nodePath) {
+function reloadNode(nodePath, nodeList) {
   var address = _nodeMap[nodePath];
   var node = _tree.getIn(address);
   var children = node.get("children");
-  var entries;
-
-  try {
-    entries = folderContents(nodePath);
-  } catch (e) {
-    // Directory does not exist so do nothing
-    if (e.code === "ENOENT") return;
-  }
 
   // Create an update function to remove deleted nodes
   var updateNode = function (children) {
-    return children.filter(function (n) {
-      var found = _.find(entries, {name: n.get("name"), type: n.get("type")});
-      return !!found || tidyDeletedNode(n.get("path"));
+    return children.filter(function (child) {
+      var found = _.find(nodeList, {name: child.get("name"), type: child.get("type")});
+      return !!found || tidyDeletedNode(child.get("path"));
     });
   };
 
-  entries.forEach(function (n, index) {
-    if(!children.findEntry(function (v) {
-      return v.get("name") === n.name;
+  nodeList.forEach(function (n, index) {
+    if(!children.findEntry(function (child) {
+      return child.get("name") === n.name;
     })) {
       // New node so compose the update function to add the node
       updateNode = _.compose(function (children) {
@@ -147,15 +191,14 @@ function reindexNode(address) {
 /**
  * Clean up after deleting a node:
  *  - remove expanded paths
- *  - unwatch path
  *  - remove node and all children from node map
  * @param {String} nodePath
  */
 function tidyDeletedNode(nodePath) {
-  unwatchNode(nodePath);
   _expandedPaths = _.reject(_expandedPaths, function (p) {
     return p.match("^" + nodePath + "(\/|$)");
   });
+
   _nodeMap = _.omit(_nodeMap, function (address, p) {
     return p.match("^" + nodePath + "(\/|$)");
   });
@@ -165,25 +208,6 @@ function tidyDeletedNode(nodePath) {
   }
 
   return false;
-}
-
-/**
- * Returns the node for the given path or undefined
- * @param {String} nodePath
- */
-function findNode(nodePath) {
-  return _nodeMap[nodePath] && _tree.getIn(_nodeMap[nodePath]);
-}
-
-function selectNode(nodePath) {
-  if (_selectedNodePath.length && _selectedNodePath !== nodePath) {
-    _tree = _tree.setIn(_nodeMap[_selectedNodePath].concat("selected"), false);
-  }
-
-  if (_selectedNodePath !== nodePath) {
-    _tree = _tree.setIn(_nodeMap[nodePath].concat("selected"), true);
-    _selectedNodePath = nodePath;
-  }
 }
 
 /**
@@ -209,15 +233,13 @@ function expandNode(nodePath) {
       _tree = _tree.setIn(_nodeMap[p].concat("expanded"), true);
       _expandedPaths.push(p);
     }
-    reloadNode(p);
-    watchNode(p);
+    reloadNode(p, FileSystem.openDir(p));
   });
 
   // Reload expanded children
   findNode(nodePath).get("children").forEach(function (n) {
     if (n.get("expanded")) {
-      reloadNode(n.get("path"));
-      watchNode(n.get("path"));
+      reloadNode(n.get("path"), FileSystem.openDir(n.get("path")));
     }
   });
 }
@@ -231,184 +253,17 @@ function expandNode(nodePath) {
 function collapseNode(nodePath) {
   var address = _nodeMap[nodePath];
   _tree = _tree.setIn(address.concat("expanded"), false);
-  unwatchNode(nodePath);
+  FileSystem.closeDir(nodePath);
   _expandedPaths = _.without(_expandedPaths, nodePath);
 }
 
-/**
- * Convenience method for toggling the node's expanded state
- * @param {String} nodePath
- */
-function toggleNode(nodePath) {
-  var node = findNode(nodePath);
-  if (!node || !node.get("expanded")) {
-    expandNode(nodePath);
-  } else {
-    collapseNode(nodePath);
-  }
-}
-
-/**
- * Starts a file system watcher on the given node
- *  - closes any previous watchers on the node
- *  - starts a watcher on the node
- *  - restarts watchers on its expanded children
- * @param {String} nodePath
- */
-function watchNode(nodePath) {
-  if (_watchers[nodePath]) {
-    _watchers[nodePath].close();
-    delete _watchers[nodePath];
+function selectNode(nodePath) {
+  if (_selectedNodePath.length && _selectedNodePath !== nodePath) {
+    _tree = _tree.setIn(_nodeMap[_selectedNodePath].concat("selected"), false);
   }
 
-  _watchers[nodePath] = PathWatcher.watch(absolute(nodePath), _.debounce(function (event) {
-    if (event === "change") {
-      reloadNode(nodePath);
-      TreeStore.emitChange();
-    }
-  }), 100);
-
-  findNode(nodePath).get("children").forEach(function (n) {
-    if (n.get("expanded")) watchNode(n.get("path"));
-  });
-}
-
-/**
- * Stops file system watchers on the given node and all its children
- * @param {String} nodePath
- */
-function unwatchNode(nodePath) {
-  for (var watchPath in _watchers) {
-    if (nodePath === "." || watchPath.match("^" + nodePath + "(\/|$)")) {
-      _watchers[watchPath].close();
-      delete _watchers[watchPath];
-    }
+  if (_selectedNodePath !== nodePath) {
+    _tree = _tree.setIn(_nodeMap[nodePath].concat("selected"), true);
+    _selectedNodePath = nodePath;
   }
 }
-
-/**
- * Returns an array of node objects for the given directory path:
- *  - ignores names from _ignoredFiles
- *  - sorts folders first
- *  - each node in array has the following keys: name, path, type
- * @param {String} dirPath
- */
-function folderContents(dirPath) {
-  var absDirPath = absolute(dirPath);
-  return _.difference(fs.readdirSync(absDirPath), _ignoredFiles).map(function (filename) {
-    var s = fs.statSync(path.join(absDirPath, filename));
-    return {
-      name : filename,
-      path : path.join(dirPath, filename),
-      type : s.isDirectory() ? "folder" : "file"
-    };
-  }).sort(function nodeCompare(a, b) {
-    if (a.type == b.type) return a.name.localeCompare(b.name);
-    return a.type == "folder" ? -1 : 1;
-  });
-}
-
-/**
- * Returns absolute version of given node path
- * @param  {String} nodePath
- */
-function absolute(nodePath) {
-  return path.join(_contentDir, nodePath);
-}
-
-
-/*=============================================*\
-  Public API
-\*=============================================*/
-
-var TreeStore = assign({}, EventEmitter.prototype, {
-  getNode: function (nodePath) {
-    return findNode(nodePath || ".");
-  },
-
-  reset: function () {
-    unwatchNode(".");
-    _nodeMap = {};
-    _expandedPaths = [];
-    _tree = undefined;
-    _selectedNodePath = "";
-    this.removeAllListeners(CHANGE_EVENT);
-  },
-
-  emitChange: function () {
-    LocalStorageActions.save("tree.expandedPaths", _expandedPaths);
-    this.emit(CHANGE_EVENT);
-  },
-
-  addChangeListener: function (listener) {
-    this.on(CHANGE_EVENT, listener);
-  },
-
-  removeChangeListener: function (listener) {
-    this.removeListener(CHANGE_EVENT, listener);
-  }
-});
-
-
-/*=============================================*\
-  Register actions
-\*=============================================*/
-
-TreeStore.dispatchToken = AppDispatcher.register(function (action) {
-  switch(action.actionType) {
-    case "setup_repo":
-    case "app_init":
-      AppDispatcher.waitFor([SettingsStore.dispatchToken]);
-      _contentDir = SettingsStore.getContentPath();
-      init();
-      TreeStore.emitChange();
-      break;
-    case "tree_expand":
-      expandNode(action.nodePath);
-      TreeStore.emitChange();
-      break;
-    case "tree_collapse":
-      collapseNode(action.nodePath);
-      TreeStore.emitChange();
-      break;
-    case "tree_toggle":
-      toggleNode(action.nodePath);
-      TreeStore.emitChange();
-      break;
-    case "tree_select":
-      selectNode(action.nodePath);
-      TreeStore.emitChange();
-      break;
-    case "tree_create":
-      Dialogs.promptForPath({
-        title: "New file",
-        defaultPath: absolute(action.savePath)
-      }, function (savedPath) {
-        if (savedPath) {
-          fs.outputFile(savedPath, "", function (err) {
-            if (err) {
-              console.log(err);
-            } else {
-              EditorActions.open(path.relative(_contentDir, savedPath));
-            }
-          });
-        }
-      });
-      break;
-    case "tree_rename":
-      var newPath = absolute(path.join(path.dirname(action.nodePath), action.filename));
-      fs.exists(newPath, function (exists) {
-        if (!exists) fs.rename(absolute(action.nodePath), newPath);
-      });
-      break;
-    case "tree_move":
-      fs.exists(action.newPath, function (exists) {
-        if (!exists) fs.rename(absolute(action.nodePath), absolute(action.newPath));
-      });
-      break;
-    default:
-      // no op
-  }
-});
-
-module.exports = TreeStore;
