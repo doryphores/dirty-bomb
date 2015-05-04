@@ -40,14 +40,14 @@ var ImageStore = Reflux.createStore({
 
   onClose: function () {
     _open = false;
-    this.emitChange();
     ImageActions.open.completed();
+    this.emitChange();
   },
 
-  onSelect: function (image) {
+  onSelect: function (imagePath) {
     _open = false;
+    ImageActions.open.completed("/media/" + imagePath);
     this.emitChange();
-    ImageActions.open.completed("/media/" + image.path);
   },
 
   onAdd: function () {
@@ -105,5 +105,6 @@ function addImage(imagePath) {
     path.basename(imagePath)
   );
   fs.copySync(imagePath, newPath);
+  load();
   return path.relative(_imageDir, newPath);
 }
