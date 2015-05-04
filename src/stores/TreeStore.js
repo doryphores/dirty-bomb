@@ -54,8 +54,12 @@ var TreeStore = Reflux.createStore({
   },
 
   onCreate: function (dirPath) {
-    FileSystem.create(dirPath, function (filePath) {
-      TreeActions.create.completed(filePath);
+    FileSystem.create(dirPath, function (err, filePath) {
+      if (err) {
+        TreeActions.create.failed();
+      } else {
+        TreeActions.create.completed(filePath);
+      }
     });
   },
 

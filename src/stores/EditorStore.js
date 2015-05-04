@@ -13,7 +13,6 @@ var EditorStore = Reflux.createStore({
   init: function () {
     // Listen to file system changes
     this.listenTo(FileSystem.fileChange, this._onFSChange);
-    this.listenTo(TreeActions.create.completed, this.onOpen);
   },
 
   getInitialState: function () {

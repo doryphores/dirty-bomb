@@ -147,13 +147,7 @@ Tree.Node = React.createClass({
     var menu = this.menu || Menu.buildFromTemplate([
       {
         label: "New file",
-        click: function () {
-          var savePath = nodePath;
-          if (nodeType === "file") {
-            savePath = path.dirname(nodePath);
-          }
-          TreeActions.create(savePath);
-        }
+        click: this._create
       },
       {
         type: "separator"
@@ -174,6 +168,8 @@ Tree.Node = React.createClass({
       }
     ]);
 
+    // Artificial delay to allow other actions to complete
+    // such as visually selecting the node
     setTimeout(function () {
       menu.popup(remote.getCurrentWindow());
     }, 100)
@@ -189,6 +185,16 @@ Tree.Node = React.createClass({
 
   _isRoot: function () {
     return this.props.node.get("path") === ".";
+  },
+
+  _create: function () {
+    var savePath = this.props.node.get("path");
+    if (this._isFile()) {
+      savePath = path.dirname(savePath);
+    }
+    TreeActions.create.triggerPromise(savePath).then(function (filePath) {
+      EditorActions.open(filePath);
+    });
   },
 
   _edit: function () {

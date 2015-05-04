@@ -28,11 +28,8 @@ var FileSystem = {
     }, function (savedPath) {
       if (savedPath) {
         fs.outputFile(savedPath, "", function (err) {
-          if (err) {
-            console.log(err);
-          } else {
-            done(path.relative(_contentDir, savedPath));
-          }
+          if (err) return done(err);
+          done(null, path.relative(_contentDir, savedPath));
         });
       }
     });
