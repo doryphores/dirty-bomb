@@ -6,7 +6,6 @@ var React           = require("react"),
     classNames      = require("classnames"),
     EditorActions   = require("../actions/EditorActions"),
     ImageActions    = require("../actions/ImageActions"),
-    ImageStore      = require("../stores/ImageStore"),
     SettingsStore   = require("../stores/SettingsStore"),
     remote          = require("remote"),
     Menu            = remote.require("menu"),
@@ -212,7 +211,7 @@ var Editor = module.exports = React.createClass({
   },
 
   _selectImage: function () {
-    ImageActions.open(function (imagePath) {
+    ImageActions.open.triggerPromise().then(function (imagePath) {
       if (imagePath) {
         var cursor = this.editor.getCursor();
         this.editor.replaceRange("![Image description](" + imagePath + ")", cursor, cursor);

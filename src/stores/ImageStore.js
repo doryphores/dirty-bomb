@@ -2,21 +2,77 @@ var fs            = require("fs-extra"),
     filewalker    = require("filewalker"),
     path          = require("path"),
     _             = require("underscore"),
-    assign        = require("object-assign"),
-    EventEmitter  = require("events").EventEmitter,
-    shell         = require("shell"),
     app           = require("remote").require("app"),
     Dialogs       = require("../Dialogs"),
     AppDispatcher = require("../dispatcher/AppDispatcher"),
-    SettingsStore = require("./SettingsStore");
+    SettingsStore = require("./SettingsStore"),
+    ImageActions  = require("../actions/ImageActions");
 
 var _imageDir;
-
 var _open = false;
 var _images = [];
-var _callback;
 
-var CHANGE_EVENT = "change";
+var ImageStore = Reflux.createStore({
+  listenables: ImageActions,
+
+  init: function () {
+    AppDispatcher.register(function (action) {
+      if (action.actionType === "app_init") {
+        AppDispatcher.waitFor([SettingsStore.dispatchToken]);
+        _imageDir = SettingsStore.getMediaPath();
+        load();
+      }
+    });
+  },
+
+  getInitialState: function () {
+    return {
+      open: _open,
+      images: _images
+    }
+  },
+
+  onOpen: function () {
+    _open = true;
+    load();
+    this.emitChange();
+  },
+
+  onClose: function () {
+    _open = false;
+    this.emitChange();
+    ImageActions.open.completed();
+  },
+
+  onSelect: function (image) {
+    _open = false;
+    this.emitChange();
+    ImageActions.open.completed("/media/" + image.path);
+  },
+
+  onAdd: function () {
+    Dialogs.promptForFile({
+      title: "Select image",
+      defaultPath: app.getPath("home"),
+      filters: [
+        { name: "Images", extensions: ["jpg", "jpeg", "png", "gif"] }
+      ]
+    }, function (imagePath) {
+      if (imagePath) {
+        this.onSelect(addImage(imagePath));
+      }
+    }.bind(this));
+  },
+
+  emitChange: function () {
+    this.trigger({
+      open: _open,
+      images: _images
+    });
+  }
+});
+
+module.exports = ImageStore;
 
 function load() {
   var images = [];
@@ -51,81 +107,3 @@ function addImage(imagePath) {
   fs.copySync(imagePath, newPath);
   return path.relative(_imageDir, newPath);
 }
-
-function open(callback) {
-  _open = true;
-  _callback = callback;
-  ImageStore.emitChange();
-  load();
-}
-
-function close() {
-  _open = false;
-  _callback = null;
-  ImageStore.emitChange();
-}
-
-function selectImage(imagePath) {
-  _.defer(_callback, "/media/" + imagePath);
-  close();
-}
-
-var ImageStore = assign({}, EventEmitter.prototype, {
-  getState: function () {
-    return {
-      images: _images,
-      open: _open
-    };
-  },
-
-  emitChange: function () {
-    this.emit(CHANGE_EVENT);
-  },
-
-  addChangeListener: function (listener) {
-    this.on(CHANGE_EVENT, listener);
-  },
-
-  removeChangeListener: function (listener) {
-    this.removeListener(CHANGE_EVENT, listener);
-  }
-});
-
-
-ImageStore.dispatchToken = AppDispatcher.register(function (action) {
-  switch(action.actionType) {
-    case "setup_repo":
-    case "app_init":
-      AppDispatcher.waitFor([SettingsStore.dispatchToken]);
-      _imageDir = SettingsStore.getMediaPath();
-      if (_imageDir) load();
-      break;
-    case "images_open":
-      open(action.callback);
-      break;
-    case "images_close":
-      _.defer(_callback);
-      close();
-      break;
-    case "images_add":
-      Dialogs.promptForFile({
-        title: "Select image",
-        defaultPath: app.getPath("home"),
-        filters: [
-          { name: "Images", extensions: ["jpg", "jpeg", "png", "gif"] }
-        ]
-      }, function (imagePath) {
-        if (imagePath) {
-          selectImage(addImage(imagePath));
-        }
-      });
-      break;
-    case "images_select":
-      selectImage(action.image.path);
-      break;
-    default:
-      // no op
-  }
-});
-
-module.exports = ImageStore;

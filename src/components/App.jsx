@@ -4,16 +4,13 @@ var React         = require("react"),
     ImageSelector = require("./ImageSelector"),
     SetupPanel    = require("./SetupPanel"),
     EditorPanes   = require("./EditorPanes"),
-    ImageStore    = require("../stores/ImageStore"),
     SettingsStore = require("../stores/SettingsStore"),
     RepoStore     = require("../stores/RepoStore"),
     AppActions    = require("../actions/AppActions");
 
 function getAppState() {
   return {
-    ready: SettingsStore.isReady() && RepoStore.isReady(),
-    imageSelectorOpen: ImageStore.getState().open,
-    images: ImageStore.getState().images
+    ready: SettingsStore.isReady() && RepoStore.isReady()
   };
 }
 
@@ -25,7 +22,6 @@ var App = React.createClass({
   componentDidMount: function() {
     SettingsStore.addChangeListener(this._onChange);
     RepoStore.addChangeListener(this._onChange);
-    ImageStore.addChangeListener(this._onChange);
 
     AppActions.init();
   },
@@ -33,8 +29,6 @@ var App = React.createClass({
   componentWillUnmount: function() {
     SettingsStore.removeChangeListener(this._onChange);
     RepoStore.removeChangeListener(this._onChange);
-    TreeStore.removeChangeListener(this._onChange);
-    ImageStore.removeChangeListener(this._onChange);
   },
 
   render: function () {
@@ -46,9 +40,7 @@ var App = React.createClass({
             <ToolBar />
             <EditorPanes />
           </div>
-          <ImageSelector
-            open={this.state.imageSelectorOpen}
-            images={this.state.images} />
+          <ImageSelector />
         </div>
       );
     } else {
