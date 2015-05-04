@@ -12,7 +12,6 @@ var React           = require("react"),
     LabelInput      = require("./LabelInput");
 
 
-
 var Tree = module.exports = React.createClass({
   mixins: [PureRenderMixin, Reflux.connect(TreeStore, "tree")],
 
@@ -161,6 +160,10 @@ Tree.Node = React.createClass({
         click: this._move
       },
       {
+        label: "Duplicate",
+        click: this._duplicate
+      },
+      {
         label: "Delete",
         click: function () {
           TreeActions.delete(nodePath);
@@ -203,6 +206,13 @@ Tree.Node = React.createClass({
 
   _move: function () {
     TreeActions.move(this.props.node.get("path"));
+  },
+
+  _duplicate: function () {
+    TreeActions.duplicate.triggerPromise(this.props.node.get("path"), this._isFolder())
+      .then(function (nodePath) {
+        if (nodePath && this._isFile()) EditorActions.open(filePath);
+      }.bind(this));
   },
 
   _rename: function (filename) {

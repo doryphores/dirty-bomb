@@ -83,6 +83,40 @@ var FileSystem = {
     }.bind(this));
   },
 
+  duplicate: function (nodePath, done) {
+    Dialogs.promptForPath({
+      defaultPath: absolute(nodePath)
+    }, function (savePath) {
+      if (savePath) {
+        if (savePath.indexOf(_contentDir) === 0) {
+          fs.copy(absolute(nodePath), savePath, {replace: false}, function (err) {
+            if (err) done(err);
+            done(null, path.relative(_contentDir, savePath));
+          });
+        } else {
+          done(new Error("Location is outside the content root"));
+        }
+      }
+    }.bind(this));
+  },
+
+  duplicateDir: function (nodePath, done) {
+    Dialogs.promptForDirectory({
+      defaultPath: absolute(path.dirname(nodePath))
+    }, function (savePath) {
+      if (savePath) {
+        if (savePath.indexOf(_contentDir) === 0) {
+          fs.copy(absolute(nodePath), savePath, function (err) {
+            if (err) done(err);
+            done(null, path.relative(_contentDir, savePath));
+          });
+        } else {
+          done(new Error("Folder is outside the content root"));
+        }
+      }
+    }.bind(this));
+  },
+
   delete: function (nodePath) {
     Dialogs.confirm({
       message: "Are you sure you want to delete this item?",

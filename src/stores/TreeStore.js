@@ -71,6 +71,16 @@ var TreeStore = Reflux.createStore({
     FileSystem.move(nodePath);
   },
 
+  onDuplicate: function (nodePath, folder) {
+    FileSystem[folder? "duplicateDir" : "duplicate"](nodePath, function (err, nodePath) {
+      if (err) {
+        TreeActions.duplicate.failed();
+      } else {
+        TreeActions.duplicate.completed(nodePath);
+      }
+    });
+  },
+
   onDelete: function (filePath) {
     FileSystem.delete(filePath);
   },

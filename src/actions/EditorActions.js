@@ -1,6 +1,4 @@
-Reflux = require("reflux");
-
-var EditorActions = Reflux.createActions([
+module.exports = require("reflux").createActions([
   "open",
   "focus",
   "update",
@@ -8,5 +6,3 @@ var EditorActions = Reflux.createActions([
   "save",
   "delete"
 ]);
-
-module.exports = EditorActions;

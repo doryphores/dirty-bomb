@@ -11,5 +11,6 @@ var TreeActions = Reflux.createActions([
 ]);
 
 TreeActions.create = Reflux.createAction({asyncResult: true});
+TreeActions.duplicate = Reflux.createAction({asyncResult: true});
 
 module.exports = TreeActions;
