@@ -4,8 +4,7 @@ var fs            = require("fs-extra"),
     _             = require("underscore"),
     app           = require("remote").require("app"),
     Dialogs       = require("../Dialogs"),
-    AppDispatcher = require("../dispatcher/AppDispatcher"),
-    SettingsStore = require("./SettingsStore"),
+    ConfigStore   = require("./ConfigStore"),
     ImageActions  = require("../actions/ImageActions");
 
 var _imageDir;
@@ -16,10 +15,9 @@ var ImageStore = Reflux.createStore({
   listenables: ImageActions,
 
   init: function () {
-    AppDispatcher.register(function (action) {
-      if (action.actionType === "app_init") {
-        AppDispatcher.waitFor([SettingsStore.dispatchToken]);
-        _imageDir = SettingsStore.getMediaPath();
+    this.listenTo(ConfigStore, function (config) {
+      if (_imageDir !== config.get("mediaPath")) {
+        _imageDir = config.get("mediaPath");
         load();
       }
     });
@@ -46,7 +44,7 @@ var ImageStore = Reflux.createStore({
 
   onSelect: function (imagePath) {
     _open = false;
-    ImageActions.open.completed("/media/" + imagePath);
+    ImageActions.open.completed(_mediaRoot + "/" + imagePath);
     this.emitChange();
   },
 
@@ -92,6 +90,9 @@ function load() {
       .on("done", function () {
         _images = _.sortBy(images, "name");
         ImageStore.emitChange();
+      })
+      .on("error", function (err) {
+        console.log(err);
       })
       .walk();
   });

@@ -5,13 +5,15 @@ var fs            = require("fs-extra"),
     app           = require("remote").require("app"),
     nodegit       = require("nodegit"),
     SettingsStore = require("./SettingsStore"),
+    ConfigStore   = require("./ConfigStore"),
     AppDispatcher = require("../dispatcher/AppDispatcher");
 
 var _ready = false;
+var _repoPath;
 
 function initRepo(done) {
   console.log("INIT REPO");
-  nodegit.Repository.open(SettingsStore.get("userSettings.repoPath")).then(function () {
+  nodegit.Repository.open(_repoPath).then(function () {
     console.log("REPO EXISTS");
     _ready = true;
     done();
@@ -20,7 +22,7 @@ function initRepo(done) {
 
 function setupRepo(done) {
   console.log("CLONING REPO");
-  nodegit.Clone(SettingsStore.get("repositoryURL"), SettingsStore.get("userSettings.repoPath"), {
+  nodegit.Clone(SettingsStore.get("repositoryURL"), _repoPath, {
     remoteCallbacks: {
       credentials: function (url, userName) {
         return nodegit.Cred.sshKeyNew(
@@ -79,13 +81,18 @@ var RepoStore = assign({}, EventEmitter.prototype, {
   }
 });
 
+ConfigStore.listen(function (config) {
+  if (config.get("repoPath") !== _repoPath) {
+    _repoPath = config.get("repoPath");
+    console.log(_repoPath);
+    initRepo(function () {
+      RepoStore.emitChange();
+    });
+  }
+});
+
 RepoStore.dispatchToken = AppDispatcher.register(function (action) {
   switch(action.actionType) {
-    case "app_init":
-      initRepo(function () {
-        RepoStore.emitChange();
-      });
-      break;
     case "setup_repo":
       AppDispatcher.waitFor([SettingsStore.dispatchToken]);
       setupRepo(function () {

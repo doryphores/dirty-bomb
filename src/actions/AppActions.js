@@ -1,11 +1,7 @@
-var AppDispatcher = require("../dispatcher/AppDispatcher");
+var Reflux = require("reflux");
 
-var AppActions = {
-  init: function (callback) {
-    AppDispatcher.dispatch({
-      actionType: "app_init"
-    });
-  }
-};
+var AppActions = Reflux.createActions([
+  "init"
+]);
 
 module.exports = AppActions;
