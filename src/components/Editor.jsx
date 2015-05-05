@@ -1,15 +1,16 @@
-var React           = require("react"),
-    PureRenderMixin = require("react/addons").addons.PureRenderMixin,
-    Showdown        = require("showdown"),
-    path            = require("path"),
-    CodeMirror      = require("codemirror"),
-    classNames      = require("classnames"),
-    EditorActions   = require("../actions/EditorActions"),
-    ImageActions    = require("../actions/ImageActions"),
-    SettingsStore   = require("../stores/SettingsStore"),
-    remote          = require("remote"),
-    Menu            = remote.require("menu"),
-    clipboard       = require("clipboard");
+var React             = require("react"),
+    PureRenderMixin   = require("react/addons").addons.PureRenderMixin,
+    Showdown          = require("showdown"),
+    path              = require("path"),
+    CodeMirror        = require("codemirror"),
+    classNames        = require("classnames"),
+    EditorActions     = require("../actions/EditorActions"),
+    FileSystemActions = require("../actions/FileSystemActions"),
+    ImageActions      = require("../actions/ImageActions"),
+    SettingsStore     = require("../stores/SettingsStore"),
+    remote            = require("remote"),
+    Menu              = remote.require("menu"),
+    clipboard         = require("clipboard");
 
 require("codemirror/mode/markdown/markdown");
 require("codemirror/mode/yaml/yaml");
@@ -207,7 +208,7 @@ var Editor = module.exports = React.createClass({
   },
 
   _onDelete: function () {
-    EditorActions.delete(this.props.file.get("path"));
+    FileSystemActions.delete(this.props.file.get("path"));
   },
 
   _selectImage: function () {

@@ -23,16 +23,10 @@ var EditorStore = Reflux.createStore({
   },
 
   open: function (filePath) {
-    var fileIndex = _getFileIndex(filePath);
-    if (fileIndex > -1) {
-      _setIndexAsActive(fileIndex);
-      this.emitChange();
+    if (_getFileIndex(filePath) > -1) {
+      this.focus(filePath);
     } else {
       FileSystemActions.open(filePath).then(function (content) {
-        if (_activeFile) {
-          _files = _files.setIn([_getFileIndex(_activeFile), "active"], false);
-        }
-
         _files = _files.push(Immutable.Map({
           name        : path.basename(filePath),
           path        : filePath,
@@ -42,9 +36,7 @@ var EditorStore = Reflux.createStore({
           active      : true
         }));
 
-        _setActiveFile(filePath);
-
-        this.emitChange();
+        this.focus(filePath);
       }.bind(this));
     }
   },
@@ -89,10 +81,6 @@ var EditorStore = Reflux.createStore({
     FileSystemActions.save(filePath, content);
     if (close) this.close(filePath);
     this.emitChange();
-  },
-
-  delete: function (filePath) {
-    FileSystemActions.delete(filePath);
   },
 
   _onFSChange: function (fsEvent) {

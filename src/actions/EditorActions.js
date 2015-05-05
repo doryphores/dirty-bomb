@@ -3,6 +3,5 @@ module.exports = require("reflux").createActions([
   "focus",
   "update",
   "close",
-  "save",
-  "delete"
+  "save"
 ]);
