@@ -1,18 +1,17 @@
-var path          = require("path"),
-    Immutable     = require("immutable"),
-    EditorActions = require("../actions/EditorActions"),
-    TreeActions   = require("../actions/TreeActions"),
-    FileSystem    = require("../services/FileSystem");
+var path              = require("path"),
+    Immutable         = require("immutable"),
+    EditorActions     = require("../actions/EditorActions"),
+    TreeActions       = require("../actions/TreeActions"),
+    FileSystemActions = require("../actions/FileSystemActions"),
+    FileSystemStore   = require("../stores/FileSystemStore");
 
-var _files = Immutable.List();
-var _activeFile = "";
 
 var EditorStore = Reflux.createStore({
   listenables: EditorActions,
 
   init: function () {
     // Listen to file system changes
-    this.listenTo(FileSystem.fileChange, this._onFSChange);
+    this.listenTo(FileSystemStore, this._onFSChange);
   },
 
   getInitialState: function () {
@@ -23,15 +22,15 @@ var EditorStore = Reflux.createStore({
     this.trigger(_files);
   },
 
-  onOpen: function (filePath) {
-    var fileIndex = getFileIndex(filePath);
+  open: function (filePath) {
+    var fileIndex = _getFileIndex(filePath);
     if (fileIndex > -1) {
-      setIndexAsActive(fileIndex);
+      _setIndexAsActive(fileIndex);
       this.emitChange();
     } else {
-      FileSystem.open(filePath, function (content) {
+      FileSystemActions.open(filePath).then(function (content) {
         if (_activeFile) {
-          _files = _files.setIn([getFileIndex(_activeFile), "active"], false);
+          _files = _files.setIn([_getFileIndex(_activeFile), "active"], false);
         }
 
         _files = _files.push(Immutable.Map({
@@ -43,15 +42,15 @@ var EditorStore = Reflux.createStore({
           active      : true
         }));
 
-        setActiveFile(filePath);
+        _setActiveFile(filePath);
 
         this.emitChange();
       }.bind(this));
     }
   },
 
-  onUpdate: function (filePath, content) {
-    _files = _files.update(getFileIndex(filePath), function (file) {
+  update: function (filePath, content) {
+    _files = _files.update(_getFileIndex(filePath), function (file) {
       return file.merge({
         content: content,
         clean: file.get("diskContent") === content
@@ -60,52 +59,52 @@ var EditorStore = Reflux.createStore({
     this.emitChange();
   },
 
-  onFocus: function (filePath) {
-    setIndexAsActive(getFileIndex(filePath));
+  focus: function (filePath) {
+    _setIndexAsActive(_getFileIndex(filePath));
     this.emitChange();
   },
 
-  onClose: function (filePath) {
-    var fileIndex = getFileIndex(filePath);
+  close: function (filePath) {
+    var fileIndex = _getFileIndex(filePath);
 
     if (fileIndex === -1) return;
 
     if (filePath === _activeFile) {
       if (_files.size === 1) {
-        setActiveFile("");
+        _setActiveFile("");
       } else {
-        setIndexAsActive(fileIndex ? fileIndex - 1 : 1);
+        _setIndexAsActive(fileIndex ? fileIndex - 1 : 1);
       }
     }
 
     _files = _files.remove(fileIndex);
 
-    FileSystem.close(filePath);
+    FileSystemActions.close(filePath);
 
     this.emitChange();
   },
 
-  onSave: function (filePath, close) {
-    var content = _files.getIn([getFileIndex(filePath), "content"]);
-    FileSystem.save(filePath, content);
-    if (close) this.onClose(filePath);
+  save: function (filePath, close) {
+    var content = _files.getIn([_getFileIndex(filePath), "content"]);
+    FileSystemActions.save(filePath, content);
+    if (close) this.close(filePath);
     this.emitChange();
   },
 
-  onDelete: function (filePath) {
-    FileSystem.delete(filePath);
+  delete: function (filePath) {
+    FileSystemActions.delete(filePath);
   },
 
   _onFSChange: function (fsEvent) {
     var filePath = fsEvent.nodePath;
-    var fileIndex = getFileIndex(filePath);
+    var fileIndex = _getFileIndex(filePath);
 
     switch (fsEvent.event) {
       case "deleted":
         if (fileIndex === -1) return;
         if (_files.getIn([fileIndex, "clean"])) {
           // File is clean so close the file
-          this.onClose(filePath);
+          this.close(filePath);
         } else {
           // File was dirty so clear disk content and keep open
           _files = _files.update(fileIndex, function (file) {
@@ -140,26 +139,34 @@ module.exports = EditorStore;
 
 
 /* ======================================== *\
-   Private functions
+   Private properties
 \* ======================================== */
 
-function getFileIndex(filePath) {
+var _files = Immutable.List();
+var _activeFile = "";
+
+
+/* ======================================== *\
+   Private methods
+\* ======================================== */
+
+function _getFileIndex(filePath) {
   return _files.findIndex(function (file) {
     return file.get("path") === filePath;
   });
 }
 
-function setIndexAsActive(fileIndex) {
+function _setIndexAsActive(fileIndex) {
   if (_activeFile) {
-    _files = _files.setIn([getFileIndex(_activeFile), "active"], false);
+    _files = _files.setIn([_getFileIndex(_activeFile), "active"], false);
   }
   _files = _files.update(fileIndex, function (file) {
-    setActiveFile(file.get("path"));
+    _setActiveFile(file.get("path"));
     return file.set("active", true);
   });
 }
 
-function setActiveFile(filePath) {
+function _setActiveFile(filePath) {
   if (_activeFile !== filePath) {
     _activeFile = filePath;
     if (_activeFile) TreeActions.select(_activeFile);

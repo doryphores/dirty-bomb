@@ -1,10 +1,9 @@
 var Reflux            = require("reflux"),
     Immutable         = require("immutable"),
     _                 = require("underscore"),
-    AppDispatcher     = require("../dispatcher/AppDispatcher"),
-    SettingsStore     = require("../stores/SettingsStore"),
-    FileSystem        = require("../services/FileSystem"),
+    FileSystemStore   = require("./FileSystemStore"),
     TreeActions       = require("../actions/TreeActions"),
+    FileSystemActions = require("../actions/FileSystemActions"),
     LocalStorageStore = require("./LocalStorageStore");
 
 var _tree;
@@ -16,13 +15,7 @@ var TreeStore = Reflux.createStore({
   listenables: TreeActions,
 
   init: function () {
-    this.listenTo(FileSystem.dirChange, this._onFSChange);
-    AppDispatcher.register(function (action) {
-      if (action.actionType === "app_init") {
-        AppDispatcher.waitFor([SettingsStore.dispatchToken]);
-        init();
-      }
-    });
+    this.listenTo(FileSystemStore, this._onFSChange);
     // this.listenTo(LocalStorageStore, this._init);
   },
 
@@ -30,64 +23,40 @@ var TreeStore = Reflux.createStore({
     return _tree;
   },
 
-  onExpand: function (nodePath) {
+  expand: function (nodePath) {
     expandNode(nodePath);
     this.emitChange();
   },
 
-  onCollapse: function (nodePath) {
+  collapse: function (nodePath) {
     collapseNode(nodePath);
     this.emitChange();
   },
 
-  onToggle: function (nodePath) {
+  toggle: function (nodePath) {
     if (findNode(nodePath).get("expanded")) {
-      this.onCollapse(nodePath);
+      this.collapse(nodePath);
     } else {
-      this.onExpand(nodePath);
+      this.expand(nodePath);
     }
   },
 
-  onSelect: function (nodePath) {
+  select: function (nodePath) {
     selectNode(nodePath);
     this.emitChange();
   },
 
-  onCreate: function (dirPath) {
-    FileSystem.create(dirPath, function (err, filePath) {
-      if (err) {
-        TreeActions.create.failed();
-      } else {
-        TreeActions.create.completed(filePath);
-      }
-    });
-  },
-
-  onRename: function (nodePath, name) {
-    FileSystem.rename(nodePath, name);
-  },
-
-  onMove: function (nodePath) {
-    FileSystem.move(nodePath);
-  },
-
-  onDuplicate: function (nodePath, folder) {
-    FileSystem[folder? "duplicateDir" : "duplicate"](nodePath, function (err, nodePath) {
-      if (err) {
-        TreeActions.duplicate.failed();
-      } else {
-        TreeActions.duplicate.completed(nodePath);
-      }
-    });
-  },
-
-  onDelete: function (filePath) {
-    FileSystem.delete(filePath);
-  },
-
   _onFSChange: function (fsEvent) {
-    reloadNode(fsEvent.nodePath, fsEvent.nodeList);
-    this.emitChange();
+    switch (fsEvent.event) {
+      case "ready":
+        init(fsEvent.rootName);
+        break;
+      case "dir_change":
+        reloadNode(fsEvent.nodePath, fsEvent.content);
+        break;
+      default:
+        // no op
+    }
   },
 
   emitChange: function () {
@@ -100,29 +69,25 @@ var TreeStore = Reflux.createStore({
 
 module.exports = TreeStore;
 
-// Private methods
+
+/* ======================================== *\
+   Private methods
+\* ======================================== */
 
 /**
  * Initialises the root node
  */
-function init() {
+function init(rootName) {
   // TODO: get this from AppInit action
   _expandedPaths = LocalStorageStore.get("tree.expandedPaths") || ["."];
 
   _tree = makeNode({
-    name: FileSystem.getRootName(),
+    name: rootName,
     path: ".",
     type: "folder"
   });
 
-  // Restore expanded nodes
-  _.reduce(_expandedPaths.sort(), function (parents, p) {
-    if (_.contains(parents, path.dirname(p))) {
-      expandNode(p);
-      parents.push(p);
-    }
-    return parents;
-  }, ["."]);
+  expandNode(".");
 }
 
 function findNode(nodePath) {
@@ -156,10 +121,11 @@ function makeNode(node, address) {
  *  - adds new nodes
  * @param {String} nodePath
  */
-function reloadNode(nodePath, nodeList) {
+function reloadNode(nodePath) {
   var address = _nodeMap[nodePath];
   var node = _tree.getIn(address);
   var children = node.get("children");
+  var nodeList = FileSystemStore.getDirContents(nodePath);
 
   // Create an update function to remove deleted nodes
   var updateNode = function (children) {
@@ -183,6 +149,8 @@ function reloadNode(nodePath, nodeList) {
   _tree = _tree.updateIn(address.concat("children"), function (children) {
     return updateNode(children.asMutable()).asImmutable();
   });
+
+  TreeStore.emitChange();
 
   // Re-index node map
   reindexNode(address);
@@ -238,7 +206,9 @@ function expandNode(nodePath) {
 
   _tree = _tree.setIn(_nodeMap[nodePath].concat("expanded"), true);
 
-  reloadNode(nodePath, FileSystem.openDir(nodePath));
+  FileSystemActions.openDir(nodePath);
+
+  reloadNode(nodePath);
 
   // Reload expanded children recursively
   findNode(nodePath).get("children").forEach(function (n) {
@@ -257,7 +227,7 @@ function expandNode(nodePath) {
 function collapseNode(nodePath) {
   var address = _nodeMap[nodePath];
   _tree = _tree.setIn(address.concat("expanded"), false);
-  FileSystem.closeDir(nodePath);
+  FileSystemActions.closeDir(nodePath);
   _expandedPaths = _.without(_expandedPaths, nodePath);
 }
 

@@ -5,6 +5,7 @@ var React           = require("react"),
     SettingsStore   = require("../stores/SettingsStore"),
     TreeStore       = require("../stores/TreeStore"),
     TreeActions     = require("../actions/TreeActions"),
+    FileSystemActions = require("../actions/FileSystemActions"),
     EditorActions   = require("../actions/EditorActions"),
     path            = require("path"),
     remote          = require("remote"),
@@ -166,7 +167,7 @@ Tree.Node = React.createClass({
       {
         label: "Delete",
         click: function () {
-          TreeActions.delete(nodePath);
+          FileSystemActions.delete(nodePath);
         }
       }
     ]);
@@ -191,11 +192,12 @@ Tree.Node = React.createClass({
   },
 
   _create: function () {
+    // TODO: move this logic to FileSystemStore
     var savePath = this.props.node.get("path");
     if (this._isFile()) {
       savePath = path.dirname(savePath);
     }
-    TreeActions.create.triggerPromise(savePath).then(function (filePath) {
+    FileSystemActions.create.triggerPromise(savePath).then(function (filePath) {
       EditorActions.open(filePath);
     });
   },
@@ -205,19 +207,20 @@ Tree.Node = React.createClass({
   },
 
   _move: function () {
-    TreeActions.move(this.props.node.get("path"));
+    FileSystemActions.move(this.props.node.get("path"));
   },
 
   _duplicate: function () {
-    TreeActions.duplicate.triggerPromise(this.props.node.get("path"), this._isFolder())
-      .then(function (nodePath) {
-        if (nodePath && this._isFile()) EditorActions.open(filePath);
+    var isFile = this._isFile()
+    FileSystemActions[isFile ? "duplicate" : "duplicateDir"]
+      .triggerPromise(this.props.node.get("path")).then(function (nodePath) {
+        if (nodePath && isFile) EditorActions.open(nodePath);
       }.bind(this));
   },
 
   _rename: function (filename) {
     if (filename !== this.props.node.get("name")) {
-      TreeActions.rename(this.props.node.get("path"), filename);
+      FileSystemActions.rename(this.props.node.get("path"), filename);
     }
     this.setState({editMode: false});
   }
