@@ -1,5 +1,6 @@
 var React        = require("react"),
     classNames   = require("classnames"),
+    ConfigStore  = require("../stores/ConfigStore"),
     SetupActions = require("../actions/SetupActions");
 
 var GithubSetupPanel = React.createClass({
@@ -21,7 +22,7 @@ var GithubSetupPanel = React.createClass({
           <div>
             <label>
               Your GitHub email address
-              <input type="email" required ref="email" />
+              <input type="email" defaultValue={ConfigStore.get("userEmail")} required ref="email" />
             </label>
           </div>
           <div>

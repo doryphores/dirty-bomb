@@ -17,6 +17,7 @@ require("codemirror/mode/yaml/yaml");
 require("codemirror/addon/mode/multiplex");
 require("codemirror/addon/edit/trailingspace");
 
+// TODO: this uses mediaRoot and mediaPath which may change over time
 var markdownExtensions = function (converter) {
   return [
     {

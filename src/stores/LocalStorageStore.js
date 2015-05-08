@@ -4,15 +4,6 @@ var Reflux              = require("reflux"),
 var LocalStorageStore = Reflux.createStore({
   listenables: LocalStorageActions,
 
-  // init: function () {
-  //   AppDispatcher.register(function (action) {
-  //     if (action.actionType === "app_init") {
-  //       AppDispatcher.waitFor([SettingsStore.dispatchToken]);
-  //       onAppInit();
-  //     }
-  //   }.bind(this));
-  // },
-
   onSave: function (key, value) {
     this.set(key, value);
   },

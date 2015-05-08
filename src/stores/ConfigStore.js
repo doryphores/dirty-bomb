@@ -4,6 +4,7 @@ var Reflux       = require("reflux"),
     app          = require("remote").require("app"),
     fs           = require("fs-extra"),
     path         = require("path"),
+    github       = require("../apis/github"),
     RepoActions  = require("../actions/RepoActions"),
     SetupActions = require("../actions/SetupActions");
 
@@ -43,15 +44,25 @@ var ConfigStore = Reflux.createStore({
     return _config[key];
   },
 
-  saveUser: function (user) {
-    _settings.userName = user.name;
-    _settings.userEmail = user.email;
-    this.save();
-  },
-
   setRepoPath: function (repoPath) {
     _settings.repoPath = repoPath;
     this.save();
+  },
+
+  setupGithub: function (username, password) {
+    github.setup(username, password, {
+      publicKeyPath: _config.publicKeyPath,
+      privateKeyPath: _config.privateKeyPath
+    }, function (err, user) {
+      if (err) {
+        SetupActions.setupGithub.failed(err);
+      } else {
+        _settings.userName = user.name;
+        _settings.userEmail = user.email;
+        this.save();
+        SetupActions.setupGithub.completed();
+      }
+    }.bind(this));
   },
 
   save: function () {

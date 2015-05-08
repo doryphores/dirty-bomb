@@ -1,16 +1,11 @@
-var app           = require("remote").require("app"),
-    os            = require("os"),
-    fs            = require("fs-extra"),
-    path          = require("path"),
-    _             = require("underscore"),
-    SettingsStore = require("../stores/SettingsStore"),
-    GithubAPI     = require("github");
+var app         = require("remote").require("app"),
+    os          = require("os"),
+    fs          = require("fs-extra"),
+    path        = require("path"),
+    _           = require("underscore"),
+    GithubAPI   = require("github");
 
 var githubAPI = new GithubAPI({version: "3.0.0"});
-
-// Private variables
-var _privateKeyPath = SettingsStore.get("privateKeyPath");
-var _publicKeyPath  = SettingsStore.get("publicKeyPath");
 
 /**
  * Sets up basic authentication for the next Github API call
@@ -36,12 +31,12 @@ function _authenticate(email, password, operation) {
  * @param {string}   password Github password
  * @param {Function} done     Callback
  */
-function _setup(email, password, done) {
+function _setup(email, password, keys, done) {
   _authenticate(email, password, function () {
     _getUserName(function (err, name) {
       if (err) return done(err);
       console.log("SETUP KEY");
-      fs.readFile(_publicKeyPath, {
+      fs.readFile(keys.publicKeyPath, {
         encoding: "utf8"
       }, function (_err, publicKey) {
         if (publicKey) {
@@ -63,7 +58,7 @@ function _setup(email, password, done) {
             });
           });
         } else {
-          _generateKeyPair(function (err, publicKey) {
+          _generateKeyPair(keys, function (err, publicKey) {
             if (err) return done(err);
             _authenticate(email, password, function () {
               _sendKeyToGithub(publicKey, function (err) {
@@ -82,7 +77,7 @@ function _setup(email, password, done) {
  * Generates a new OpenSSH key pair and saves to disk
  * @param {Function} done  callback
  */
-function _generateKeyPair(done) {
+function _generateKeyPair(keys, done) {
   // Forge doesn't work well in the renderer process
   // so require it from the "browser" process
   var forge = require("remote").require("node-forge")
@@ -98,12 +93,12 @@ function _generateKeyPair(done) {
     var publicKey  = forge.ssh.publicKeyToOpenSSH(keypair.publicKey);
 
     // Write keys to disk
-    fs.ensureDir(path.dirname(_publicKeyPath), function (err) {
+    fs.ensureDir(path.dirname(keys.publicKeyPath), function (err) {
       console.log("WRITING KEYS TO DISK");
       if (err) return done(err);
 
-      fs.writeFileSync(_privateKeyPath, privateKey, {mode: 0400});
-      fs.writeFileSync(_publicKeyPath, publicKey);
+      fs.writeFileSync(keys.privateKeyPath, privateKey, {mode: 0400});
+      fs.writeFileSync(keys.publicKeyPath, publicKey);
 
       console.log("KEYS WRITTEN TO DISK");
 
@@ -138,8 +133,8 @@ function _getUserName(done) {
 }
 
 module.exports = {
-  setup: function (email, password, done) {
-    _setup(email, password, function (err, name) {
+  setup: function (email, password, keys, done) {
+    _setup(email, password, keys, function (err, name) {
       console.log("ALL DONE");
       if (err) return done(err);
 
