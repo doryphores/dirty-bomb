@@ -1,28 +1,26 @@
 var React            = require("react"),
-    SettingsStore    = require("../stores/SettingsStore"),
+    Reflux           = require("reflux"),
+    ConfigStore      = require("../stores/ConfigStore"),
     RepoStore        = require("../stores/RepoStore"),
     GithubSetupPanel = require("./GithubSetupPanel"),
     RepoSetupPanel   = require("./RepoSetupPanel");
 
 function getState() {
   return {
-    currentStep: SettingsStore.isReady() ? "repo" : "github"
+    currentStep: ConfigStore.isUserReady() ? "repo" : "github"
   };
 }
 
 var SetupPanel = React.createClass({
+  mixins: [Reflux.ListenerMixin],
+
   getInitialState: function () {
     return getState();
   },
 
   componentDidMount: function() {
-    SettingsStore.addChangeListener(this._onChange);
-    RepoStore.addChangeListener(this._onChange);
-  },
-
-  componentWillUnmount: function() {
-    SettingsStore.removeChangeListener(this._onChange);
-    RepoStore.removeChangeListener(this._onChange);
+    this.listenTo(ConfigStore, this._onChange);
+    this.listenTo(RepoStore, this._onChange);
   },
 
   render: function () {

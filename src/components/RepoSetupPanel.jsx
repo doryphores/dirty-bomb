@@ -1,12 +1,14 @@
-var React        = require("react"),
-    app          = require("remote").require("app"),
-    classNames   = require("classnames"),
-    Dialogs      = require("../Dialogs"),
-    SetupActions = require("../actions/SetupActions"),
-    RepoStore    = require("../stores/RepoStore"),
-    ProgressBar  = require("./ProgressBar");
+var React       = require("react"),
+    Reflux      = require("reflux"),
+    app         = require("remote").require("app"),
+    classNames  = require("classnames"),
+    Dialogs     = require("../Dialogs"),
+    RepoActions = require("../actions/RepoActions"),
+    ProgressBar = require("./ProgressBar");
 
 var RepoSetupPanel = React.createClass({
+  mixins: [Reflux.ListenerMixin],
+
   getInitialState: function () {
     return {
       repoPath: "",
@@ -16,11 +18,7 @@ var RepoSetupPanel = React.createClass({
   },
 
   componentDidMount: function() {
-    RepoStore.addProgressListener(this._onProgress);
-  },
-
-  componentWillUnmount: function() {
-    RepoStore.removeProgressListener(this._onProgress);
+    this.listenTo(RepoActions.setPath.progressed, this._onProgress);
   },
 
   render: function() {
@@ -71,7 +69,7 @@ var RepoSetupPanel = React.createClass({
   _onSubmit: function (e) {
     e.preventDefault();
     this.setState({inProgress: true});
-    SetupActions.setupRepo(this.state.repoPath);
+    RepoActions.setPath(this.state.repoPath);
   }
 });
 

@@ -5,7 +5,7 @@ var fs                = require("fs-extra"),
     PathWatcher       = require("pathwatcher"),
     Dialogs           = require("../Dialogs"),
     Reflux            = require("reflux"),
-    ConfigStore       = require("../stores/ConfigStore"),
+    RepoStore         = require("../stores/RepoStore"),
     FileSystemActions = require("../actions/FileSystemActions");
 
 
@@ -13,9 +13,18 @@ var FileSystemStore = Reflux.createStore({
   listenables: FileSystemActions,
 
   init: function () {
-    this.listenTo(ConfigStore, function (config) {
-      _setup(config.get("contentPath"));
-    });
+    this.listenTo(RepoStore, this.setup);
+  },
+
+  setup: function () {
+    if (RepoStore.isReady() && RepoStore.getContentPath() !== _rootPath) {
+      _rootPath = RepoStore.getContentPath();
+      this.trigger({
+        nodePath: ".",
+        event: "ready",
+        rootName: path.basename(_rootPath)
+      });
+    }
   },
 
   getDirContents: function (dirPath) {
@@ -164,17 +173,6 @@ var _dirWatchers = {};
 /* ======================================= *\
    PRIVATE METHODS
 \* ======================================= */
-
-function _setup(rootPath) {
-  if (rootPath !== _rootPath) {
-    _rootPath = rootPath;
-    FileSystemStore.trigger({
-      nodePath: ".",
-      event: "ready",
-      rootName: path.basename(_rootPath)
-    });
-  }
-}
 
 function _watchFile(filePath) {
   if (_fileWatchers[filePath]) {

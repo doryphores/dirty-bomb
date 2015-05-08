@@ -1,6 +1,4 @@
-var Reflux = require("reflux");
-
-var FileSystemActions = Reflux.createActions({
+module.exports = require("reflux").createActions({
   create       : { asyncResult: true },
   open         : { asyncResult: true },
   close        : { asyncResult: false },
@@ -14,5 +12,3 @@ var FileSystemActions = Reflux.createActions({
   duplicate    : { asyncResult: true },
   duplicateDir : { asyncResult: true }
 });
-
-module.exports = FileSystemActions;

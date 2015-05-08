@@ -1,10 +1,11 @@
-var Reflux = require("reflux"),
-    Immutable = require("immutable"),
-    _ = require("underscore"),
-    app = require("remote").require("app"),
-    fs = require("fs-extra"),
-    path = require("path"),
-    AppActions = require("../actions/AppActions");
+var Reflux       = require("reflux"),
+    Immutable    = require("immutable"),
+    _            = require("underscore"),
+    app          = require("remote").require("app"),
+    fs           = require("fs-extra"),
+    path         = require("path"),
+    RepoActions  = require("../actions/RepoActions"),
+    SetupActions = require("../actions/SetupActions");
 
 var _keyPath = path.join(app.getPath("userData"), "keys");
 var _configPath = path.join(app.getPath("userData"), "config.json");
@@ -23,21 +24,39 @@ var _settings = {
 };
 
 var ConfigStore = Reflux.createStore({
+  listenables: SetupActions,
+
   init: function () {
-    this.listenTo(AppActions.init, function () {
-      fs.readJSON(_configPath, function (err, settings) {
-        if (!err) {
-          _.assign(_settings, settings);
-        }
-        this.emitChange();
-      }.bind(this));
-    });
+    this.listenTo(RepoActions.setPath.completed, this.setRepoPath);
+
+    if (fs.existsSync(_configPath)) {
+      _.assign(_settings, fs.readJSONSync(_configPath));
+      this.save();
+    }
   },
 
-  emitChange: function () {
-    _config.contentPath = path.join(_settings.repoPath, "content");
-    _config.mediaPath = path.join(_settings.repoPath, "public", "media");
-    this.trigger(Immutable.Map(_config).merge(_settings));
+  isUserReady: function () {
+    return !!(_settings.userName && _settings.userEmail);
+  },
+
+  get: function (key) {
+    return _config[key];
+  },
+
+  saveUser: function (user) {
+    _settings.userName = user.name;
+    _settings.userEmail = user.email;
+    this.save();
+  },
+
+  setRepoPath: function (repoPath) {
+    _settings.repoPath = repoPath;
+    this.save();
+  },
+
+  save: function () {
+    _.assign(_config, _settings);
+    this.trigger();
     fs.outputJSON(_configPath, _settings);
   }
 });

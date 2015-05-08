@@ -1,10 +1,6 @@
-var Reflux = require("reflux");
-
-var TreeActions = Reflux.createActions([
+module.exports = require("reflux").createActions([
   "expand",
   "collapse",
   "toggle",
   "select"
 ]);
-
-module.exports = TreeActions;

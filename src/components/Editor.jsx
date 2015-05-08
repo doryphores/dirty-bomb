@@ -1,13 +1,13 @@
 var React             = require("react"),
     PureRenderMixin   = require("react/addons").addons.PureRenderMixin,
     Showdown          = require("showdown"),
-    path              = require("path"),
     CodeMirror        = require("codemirror"),
     classNames        = require("classnames"),
     EditorActions     = require("../actions/EditorActions"),
     FileSystemActions = require("../actions/FileSystemActions"),
     ImageActions      = require("../actions/ImageActions"),
-    SettingsStore     = require("../stores/SettingsStore"),
+    RepoStore         = require("../stores/RepoStore"),
+    ConfigStore       = require("../stores/ConfigStore"),
     remote            = require("remote"),
     Menu              = remote.require("menu"),
     clipboard         = require("clipboard");
@@ -17,32 +17,23 @@ require("codemirror/mode/yaml/yaml");
 require("codemirror/addon/mode/multiplex");
 require("codemirror/addon/edit/trailingspace");
 
-var _converter;
+var markdownExtensions = function (converter) {
+  return [
+    {
+      type   : "lang",
+      filter : function (md) {
+        return md.replace(/---[\s\S]*?---/, "");
+      }
+    },
+    {
+      type    : "lang",
+      regex   : ConfigStore.get("mediaRoot"),
+      replace : "file://" + encodeURI(RepoStore.getMediaPath())
+    }
+  ];
+};
 
-function getConverter(imageRoot) {
-  if (!_converter) {
-    var markdownExtensions = function (converter) {
-      return [
-        {
-          type   : "lang",
-          filter : function (md) {
-            return md.replace(/---[\s\S]*?---/, "");
-          }
-        },
-        {
-          type    : "lang",
-          regex   : "/media",
-          replace : "file://" + encodeURI(imageRoot)
-        }
-      ];
-    };
-
-    _converter = new Showdown.converter({extensions: [markdownExtensions]});
-  }
-
-  return _converter;
-}
-
+var _converter = new Showdown.converter({extensions: [markdownExtensions]});
 
 CodeMirror.defineMode("frontmatter_markdown", function(config) {
   return CodeMirror.multiplexingMode(
@@ -114,8 +105,7 @@ var Editor = module.exports = React.createClass({
   },
 
   render: function () {
-    var converter = getConverter(SettingsStore.getMediaPath());
-    var previewHTML = converter.makeHtml(this.props.file.get("content"));
+    var previewHTML = _converter.makeHtml(this.props.file.get("content"));
     return (
       <div className={this._classNames()}>
         <div className="editor panel-container vertical">
