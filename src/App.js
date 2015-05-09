@@ -2,6 +2,7 @@ require("node-jsx").install({extension: ".jsx"});
 
 var fs          = require("fs"),
     path        = require("path"),
+    PathWatcher = require("pathwatcher"),
     stylus      = require("stylus"),
     React       = require("react"),
     ConfigStore = require("./stores/ConfigStore"),
@@ -13,6 +14,7 @@ exports.bootstrap = function () {
   ConfigStore.listen(render);
   RepoStore.listen(render);
   compileCSS(render);
+  watchCSS();
 };
 
 function render() {
@@ -30,14 +32,22 @@ function compileCSS(done) {
     if (err) throw err;
     stylus(styles)
       .set("filename", themeFilename)
-      .set("paths", [__dirname])
       .render(function (err, css) {
         if (err) throw err;
-        var s = document.createElement("style");
+        var s = document.querySelector("style");
+        if (!s) {
+          s = document.createElement("style");
+          document.querySelector("head").appendChild(s);
+        }
         s.innerHTML = css;
-        document.querySelector("head").appendChild(s);
         console.timeEnd("Compile CSS");
-        done();
+        if (done) done();
       });
+  });
+}
+
+function watchCSS() {
+  PathWatcher.watch(path.resolve(__dirname, "../static/css"), function () {
+    compileCSS();
   });
 }
