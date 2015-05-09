@@ -7,10 +7,10 @@ var React         = require("react"),
 var App = React.createClass({
   render: function () {
     return (
-      <div className="panel-container horizontal">
-        <Tree />
-        <div className="workspace panel-container vertical">
-          <ToolBar />
+      <div className="app">
+        <ToolBar />
+        <div className="workspace">
+          <Tree />
           <EditorPanes />
         </div>
         <ImageSelector />

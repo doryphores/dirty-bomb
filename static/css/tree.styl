@@ -1,10 +1,15 @@
 .tree
   position relative
   z-index 2
-  flex 0 0 auto
+  display flex
+  flex-direction column
   width 300px
-  min-width 150px
+  min-width 200px
   max-width 50%
+
+.tree__scroller
+  flex 1
+  overflow auto
   height 100%
   background #d2d2d2
   -webkit-user-select none
@@ -16,10 +21,6 @@
   bottom 0
   width 5px
   cursor col-resize
-
-.tree__scroller
-  height 100%
-  overflow auto
 
 
 // Tree node lists

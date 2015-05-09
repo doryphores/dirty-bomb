@@ -23,7 +23,7 @@ var EditorPanes = React.createClass({
     }.bind(this));
 
     return (
-      <div className="panel-container vertical">
+      <div className="panels">
         <TabBar
           files={this.state.files}
           onChangeFocus={this._onChangeFocus}

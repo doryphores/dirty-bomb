@@ -117,7 +117,7 @@ var Editor = module.exports = React.createClass({
     var previewHTML = getConverter().makeHtml(this.props.file.get("content"));
     return (
       <div className={this._classNames()}>
-        <div className="editor panel-container vertical">
+        <div className="editor">
           <div className="editor-toolbar">
             <button className="button" onClick={this._onSave}>
               <span className="button__label">Save</span>
@@ -140,7 +140,7 @@ var Editor = module.exports = React.createClass({
   },
 
   _classNames: function () {
-    return classNames("editor-pane panel-container horizontal", {
+    return classNames("editor-pane", {
       "editor-pane--is-focused": this.props.file.get("active")
     });
   },

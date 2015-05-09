@@ -1,10 +1,13 @@
 .editor-panes
+  flex 1
   position relative
   height 100%
   width 100%
   background #d2d2d2
 
 .editor-pane
+  display flex
+  flex-direction row
   position absolute
   z-index 1
   width 100%
@@ -14,16 +17,17 @@
   z-index 2
 
 .editor-toolbar
-  flex 0 0 auto
   padding 0 5px 5px 5px
 
 .editor
+  display flex
+  flex-direction column
   width 50%
   height 100%
 
 .cm-container
+  flex 1
   position relative
-  height 100%
 
 .CodeMirror
   position absolute
