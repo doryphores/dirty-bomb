@@ -17,24 +17,32 @@ require("codemirror/mode/yaml/yaml");
 require("codemirror/addon/mode/multiplex");
 require("codemirror/addon/edit/trailingspace");
 
-// TODO: this uses mediaRoot and mediaPath which may change over time
-var markdownExtensions = function (converter) {
-  return [
-    {
-      type   : "lang",
-      filter : function (md) {
-        return md.replace(/---[\s\S]*?---/, "");
-      }
-    },
-    {
-      type    : "lang",
-      regex   : ConfigStore.get("mediaRoot"),
-      replace : "file://" + encodeURI(RepoStore.getMediaPath())
-    }
-  ];
-};
+var _converter;
 
-var _converter = new Showdown.converter({extensions: [markdownExtensions]});
+function getConverter() {
+  if (_converter) return _converter;
+
+  // TODO: this uses mediaRoot and mediaPath which may change over time
+  var markdownExtensions = function (converter) {
+    return [
+      {
+        type   : "lang",
+        filter : function (md) {
+          return md.replace(/---[\s\S]*?---/, "");
+        }
+      },
+      {
+        type    : "lang",
+        regex   : ConfigStore.get("mediaRoot"),
+        replace : "file://" + encodeURI(RepoStore.getMediaPath())
+      }
+    ];
+  };
+
+  _converter = new Showdown.converter({extensions: [markdownExtensions]});
+
+  return _converter;
+}
 
 CodeMirror.defineMode("frontmatter_markdown", function(config) {
   return CodeMirror.multiplexingMode(
@@ -106,7 +114,7 @@ var Editor = module.exports = React.createClass({
   },
 
   render: function () {
-    var previewHTML = _converter.makeHtml(this.props.file.get("content"));
+    var previewHTML = getConverter().makeHtml(this.props.file.get("content"));
     return (
       <div className={this._classNames()}>
         <div className="editor panel-container vertical">
