@@ -50,8 +50,8 @@ var GithubSetupPanel = React.createClass({
 
     this.setState({inProgress: true});
     SetupActions.setupGithub(
-      this.refs.email.getDOMNode().value,
-      this.refs.password.getDOMNode().value
+      React.findDOMNode(this.refs.email).value,
+      React.findDOMNode(this.refs.password).value
     );
   }
 });

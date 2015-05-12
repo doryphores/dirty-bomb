@@ -9,7 +9,7 @@ var ImageSelector = React.createClass({
 
   componentDidUpdate: function(prevProps, prevState) {
     if (!prevState.open) {
-      this.refs.imageList.getDOMNode().scrollTop = 0;
+      React.findDOMNode(this.refs.imageList).scrollTop = 0;
     }
   },
 

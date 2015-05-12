@@ -67,7 +67,7 @@ var Editor = module.exports = React.createClass({
   mixins: [PureRenderMixin],
 
   componentDidMount: function () {
-    this.editor = CodeMirror(this.refs.editor.getDOMNode(), {
+    this.editor = CodeMirror(React.findDOMNode(this.refs.editor), {
       mode              : "frontmatter_markdown",
       theme             : "zenburn",
       lineWrapping      : true,
