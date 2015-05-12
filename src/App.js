@@ -19,9 +19,9 @@ exports.bootstrap = function () {
 
 function render() {
   if (ConfigStore.isUserReady() && RepoStore.isReady()) {
-    React.render(React.createElement(App), document.body);
+    React.render(React.createElement(App), document.getElementById("dirty-bomb"));
   } else {
-    React.render(React.createElement(SetupPanel), document.body);
+    React.render(React.createElement(SetupPanel), document.getElementById("dirty-bomb"));
   }
 }
 
