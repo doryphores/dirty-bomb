@@ -69,7 +69,7 @@ var Editor = module.exports = React.createClass({
   componentDidMount: function () {
     this.editor = CodeMirror(this.refs.editor.getDOMNode(), {
       mode              : "frontmatter_markdown",
-      theme             : "mbo",
+      theme             : "zenburn",
       lineWrapping      : true,
       showTrailingSpace : true,
       value             : this.props.file.get("content")
