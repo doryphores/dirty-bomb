@@ -1,4 +1,4 @@
-var fs                = require("fs-extra"),
+var jetpack           = require("fs-jetpack"),
     path              = require("path"),
     _                 = require("underscore"),
     shell             = require("shell"),
@@ -19,6 +19,7 @@ var FileSystemStore = Reflux.createStore({
   setup: function () {
     if (RepoStore.isReady() && RepoStore.getContentPath() !== _rootPath) {
       _rootPath = RepoStore.getContentPath();
+      _contentDir = jetpack.cwd(_rootPath);
       this.trigger({
         nodePath: ".",
         event: "ready",
@@ -32,15 +33,11 @@ var FileSystemStore = Reflux.createStore({
   },
 
   open: function (filePath) {
-    fs.readFile(_absolute(filePath), {
-      encoding: "utf-8"
-    }, function (err, fileContent) {
-      if (err) {
-        FileSystemActions.open.failed(err);
-      } else {
-        _watchFile(filePath);
-        FileSystemActions.open.completed(fileContent);
-      }
+    _contentDir.readAsync(filePath).then(function (fileContent) {
+      _watchFile(filePath);
+      FileSystemActions.open.completed(fileContent);
+    }).catch(function (err) {
+      FileSystemActions.open.failed(err);
     });
   },
 
@@ -57,29 +54,21 @@ var FileSystemStore = Reflux.createStore({
   },
 
   save: function (filePath, content) {
-    fs.outputFile(_absolute(filePath), content, function (err) {
-      if (err) {
-        FileSystemActions.save.failed(err);
-      } else {
-        FileSystemActions.save.completed();
-      }
-    });
+    _contentDir.writeAsync(filePath, content)
+      .then(FileSystemActions.save.completed)
+      .catch(FileSystemActions.save.failed);
   },
 
   create: function (dirPath) {
     // TODO: make it accept a node path and work out the default location
     Dialogs.promptForPath({
       title: "New file",
-      defaultPath: _absolute(dirPath)
+      defaultPath: _contentDir.path(dirPath)
     }, function (savePath) {
       if (_validFilePath(savePath)) {
-        fs.outputFile(savePath, "", function (err) {
-          if (err) {
-            FileSystemActions.create.failed(err);
-          } else {
-            FileSystemActions.create.completed(_relative(savePath));
-          }
-        });
+        _contentDir.writeAsync(_relative(savePath), "").then(function () {
+          FileSystemActions.create.completed(_relative(savePath));
+        }).catch(FileSystemActions.create.failed);
       } else {
         FileSystemActions.create.completed(false);
       }
@@ -92,44 +81,38 @@ var FileSystemStore = Reflux.createStore({
       detail: "Your are deleting '" + nodePath + "'.",
       buttons: ["Cancel", "Move to trash"]
     }, function (button) {
-      if (button === 1) shell.moveItemToTrash(_absolute(nodePath));
+      if (button === 1) shell.moveItemToTrash(_contentDir.path(nodePath));
     });
   },
 
   rename: function (nodePath, name) {
-    var newPath = _absolute(path.join(path.dirname(nodePath), name));
     // TODO: validate file/folder name
-    fs.exists(newPath, function (exists) {
-      if (!exists) {
-        fs.rename(_absolute(nodePath), newPath);
-      }
-    });
+    if (!_contentDir.exists(path.join(path.dirname(nodePath), name))) {
+      _contentDir.rename(nodePath, name);
+    }
   },
 
   move: function (nodePath) {
     Dialogs.promptForDirectory({
-      defaultPath: _absolute(path.dirname(nodePath))
+      defaultPath: _contentDir.path(path.dirname(nodePath))
     }, function (dir) {
       // TODO: validate destination
       if (dir && dir.indexOf(_rootPath) === 0) {
-        fs.rename(_absolute(nodePath), path.join(dir, path.basename(nodePath)));
+        _contentDir.move(nodePath, _relative(path.join(dir, path.basename(nodePath))));
       }
     });
   },
 
   duplicate: function (filePath) {
     Dialogs.promptForPath({
-      defaultPath: _absolute(filePath)
+      defaultPath: _contentDir.path(filePath)
     }, function (savePath) {
-      console.log(savePath);
       if (_validFilePath(savePath)) {
-        fs.copy(_absolute(filePath), savePath, function (err) {
-          if (err) {
-            FileSystemActions.duplicate.failed(err);
-          } else {
+        _contentDir.copyAsync(filePath, _relative(savePath))
+          .then(function () {
             FileSystemActions.duplicate.completed(_relative(savePath));
-          }
-        });
+          })
+          .catch(FileSystemActions.duplicate.failed);
       } else {
         FileSystemActions.duplicate.failed(new Error("Invalid destination"));
       }
@@ -137,19 +120,17 @@ var FileSystemStore = Reflux.createStore({
   },
 
   duplicateDir: function (dirPath) {
-    // TODO: not a proper duplicateDir, this copies the contents of dirPath
+    // TODO: not a proper duplicateDir, this merges the contents of dirPath
     // into the selected/created directory
     Dialogs.promptForDirectory({
-      defaultPath: _absolute(path.dirname(dirPath))
+      defaultPath: _contentDir.path(path.dirname(dirPath))
     }, function (savePath) {
       if (_validDirPath(savePath)) {
-        fs.copy(_absolute(dirPath), savePath, function (err) {
-          if (err) {
-            FileSystemActions.duplicateDir.failed(err);
-          } else {
-            FileSystemActions.duplicateDir.completed(_relative(savePath));
-          }
-        });
+        _contentDir.copyAsync(dirPath, _relative(savePath), {
+          overwrite: true
+        }).then(function () {
+          FileSystemActions.duplicateDir.completed(_relative(savePath));
+        }).catch(FileSystemActions.duplicateDir.failed);
       } else {
         FileSystemActions.duplicateDir.failed(new Error("Invalid destination"));
       }
@@ -164,6 +145,7 @@ module.exports = FileSystemStore;
    Private properties
 \* ======================================== */
 
+var _contentDir;
 var _rootPath;
 var _ignoredFiles = [".DS_Store", "Thumbs.db", ".git"];
 var _fileWatchers = {};
@@ -178,7 +160,7 @@ function _watchFile(filePath) {
   if (_fileWatchers[filePath]) {
     _fileWatchers[filePath].close();
   }
-  _fileWatchers[filePath] = PathWatcher.watch(_absolute(filePath),
+  _fileWatchers[filePath] = PathWatcher.watch(_contentDir.path(filePath),
     _onFileChange.bind(null, filePath));
 }
 
@@ -193,7 +175,7 @@ function _watchDir(dirPath) {
   if (_dirWatchers[dirPath]) {
     _dirWatchers[dirPath].close();
   }
-  _dirWatchers[dirPath] = PathWatcher.watch(_absolute(dirPath),
+  _dirWatchers[dirPath] = PathWatcher.watch(_contentDir.path(dirPath),
     _onDirChange.bind(null, dirPath));
 }
 
@@ -207,22 +189,18 @@ function _unwatchDir(dirPath) {
 }
 
 function _onFileChange(filePath) {
-  fs.readFile(_absolute(filePath), {
-    encoding: "utf-8"
-  }, function (err, content) {
-    if (err) {
-      _unwatchFile(filePath);
-      FileSystemStore.trigger({
-        nodePath: filePath,
-        event: "deleted"
-      });
-    } else {
-      FileSystemStore.trigger({
-        nodePath: filePath,
-        event: "changed",
-        content: content
-      });
-    }
+  _contentDir.readAsync(filePath).then(function (content) {
+    FileSystemStore.trigger({
+      nodePath: filePath,
+      event: "changed",
+      content: content
+    });
+  }).catch(function (err) {
+    _unwatchFile(filePath);
+    FileSystemStore.trigger({
+      nodePath: filePath,
+      event: "deleted"
+    });
   });
 }
 
@@ -236,12 +214,8 @@ function _onDirChange(dirPath, event) {
   }
 }
 
-function _absolute(nodePath) {
-  return path.join(_rootPath, nodePath);
-}
-
 function _relative(nodePath) {
-  return path.relative(_rootPath, nodePath);
+  return path.relative(_contentDir.path(), nodePath);
 }
 
 function _validDirPath(dirPath) {
@@ -253,12 +227,13 @@ function _validFilePath(filePath) {
 }
 
 function _nodeList(nodePath) {
-  return _.difference(fs.readdirSync(_absolute(nodePath)), _ignoredFiles).map(function (nodeName) {
-    var s = fs.statSync(_absolute(path.join(nodePath, nodeName)));
+  return _contentDir.list(nodePath, true).filter(function (node) {
+    return !_.contains(_ignoredFiles, node.name);
+  }).map(function (node) {
     return {
-      name : nodeName,
-      path : path.join(nodePath, nodeName),
-      type : s.isDirectory() ? "folder" : "file"
+      name : node.name,
+      path : path.join(nodePath, node.name),
+      type : node.type == "dir" ? "folder" : "file"
     };
   }).sort(function nodeCompare(a, b) {
     if (a.type == b.type) return a.name.localeCompare(b.name);
