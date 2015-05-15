@@ -1,27 +1,26 @@
 var React  = require("react");
-var ipc    = require("ipc");
+var Reflux = require("reflux");
+var RepoStore = require("../stores/RepoStore");
+var RepoActions = require("../actions/RepoActions");
 
 module.exports = React.createClass({
-  reload: function () {
-    window.location.reload();
-  },
-
-  runSpecs: function () {
-    ipc.send("spec");
-  },
+  mixins: [Reflux.connect(RepoStore, "repo")],
 
   render: function () {
     return (
       <div className="toolbar">
-        <button className="button" onClick={this.reload}>
-          <span className="button__label">Reload</span>
-          <span className="button__icon icon-sync" />
-        </button>
-        <button className="button" onClick={this.runSpecs}>
-          <span className="button__label">Run specs</span>
-          <span className="button__icon icon-checklist" />
-        </button>
+        <select defaultValue={this.state.repo.get("currentBranch")} onChange={this._onChangeBranch}>
+          {this.state.repo.get("branches").map(function (b) {
+            return (<option value={b} key={b}>{b}</option>);
+          })}
+        </select>
+
+        <span>Changes: {this.state.repo.get("status").size}</span>
       </div>
     );
+  },
+
+  _onChangeBranch: function (e) {
+    RepoActions.checkout(e.target.value);
   }
 });

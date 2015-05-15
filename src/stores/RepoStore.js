@@ -1,8 +1,10 @@
 var fs          = require("fs-extra"),
     path        = require("path"),
+    _           = require("underscore"),
     app         = require("remote").require("app"),
     nodegit     = require("nodegit"),
     Reflux      = require("reflux"),
+    Immutable   = require("immutable"),
     ConfigStore = require("./ConfigStore"),
     RepoActions = require("../actions/RepoActions");
 
@@ -11,14 +13,24 @@ var RepoStore = Reflux.createStore({
 
   init: function () {
     if (ConfigStore.get("repoPath")) {
-      initRepo(ConfigStore.get("repoPath"), function () {
-        if (_ready) this.trigger();
-      }.bind(this));
+      initRepo(ConfigStore.get("repoPath"));
     }
+  },
+
+  getInitialState: function () {
+    return Immutable.fromJS(_repoState);
   },
 
   isReady: function () {
     return _ready;
+  },
+
+  getRepo: function () {
+    return _repo;
+  },
+
+  checkout: function (branchName) {
+    checkoutRemoteBranch(branchName);
   },
 
   getContentPath: function () {
@@ -33,21 +45,19 @@ var RepoStore = Reflux.createStore({
     initRepo(repoPath, function () {
       if (_ready) {
         RepoActions.setPath.completed(repoPath);
-        this.trigger();
       } else {
         setupRepo(function (err) {
           if (err) RepoActions.setPath.failed();
           else {
             RepoActions.setPath.completed(repoPath);
-            this.trigger();
           }
-        }.bind(this));
+        });
       }
-    }.bind(this));
+    });
   },
 
   emitChange: function () {
-    this.trigger();
+    this.trigger(Immutable.fromJS(_repoState));
   }
 });
 
@@ -57,6 +67,22 @@ var _ready = false;
 var _repo;
 var _repoPath;
 
+var _repoState = {
+  currentBranch: "",
+  branches: [],
+  status: []
+};
+
+function reset() {
+  _repo = null;
+  _ready = false;
+  _repoState = {
+    currentBranch: "",
+    branches: [],
+    status: []
+  };
+}
+
 function initRepo(repoPath, done) {
   _repoPath = repoPath;
 
@@ -65,27 +91,35 @@ function initRepo(repoPath, done) {
     console.log("REPO EXISTS");
     _repo = repo;
     _ready = true;
-    done();
+    RepoStore.emitChange();
+    updateBranches();
+    if (done) done();
   }).catch(function (err) {
     console.log(err);
-    _repo = null;
-    _ready = false;
-    done();
+    reset();
+    RepoStore.emitChange();
+    if (done) done();
   });
+}
+
+function credentials(url, userName) {
+  return nodegit.Cred.sshKeyNew(
+    userName,
+    ConfigStore.get("publicKeyPath"),
+    ConfigStore.get("privateKeyPath"),
+    ""
+  );
+}
+
+function signature() {
+  return nodegit.Signature.now(ConfigStore.get("userName"), ConfigStore.get("userEmail"));
 }
 
 function setupRepo(done) {
   console.log("CLONING REPO");
   nodegit.Clone(ConfigStore.get("repoURL"), _repoPath, {
     remoteCallbacks: {
-      credentials: function (url, userName) {
-        return nodegit.Cred.sshKeyNew(
-          userName,
-          ConfigStore.get("publicKeyPath"),
-          ConfigStore.get("privateKeyPath"),
-          ""
-        );
-      },
+      credentials: credentials,
       transferProgress: function (stats) {
         var processedObjects = (stats.receivedObjects() + (stats.indexedObjects() || 0));
         var progress = processedObjects / stats.totalObjects() * 50;
@@ -101,4 +135,82 @@ function setupRepo(done) {
     console.log("ERROR CLONING REPO", err);
     done(err);
   });
+}
+
+function checkoutRemoteBranch(branchName) {
+  console.time("FETCH");
+  _repo.fetchAll({
+    credentials: credentials
+  }).then(function () {
+    console.timeEnd("FETCH");
+    _repo.getBranch(branchName, function (err, branch) {
+      if (err) {
+        _repo.getBranch("origin/" + branchName, function (err, branch) {
+
+        })
+      }
+    })
+    nodegit.Reference.dwim(branchName).then(function () {
+
+    }).catch(function () {
+
+    });
+
+    _repo.getBranchCommit("origin/" + branchName).then(function (commit) {
+      return _repo.createBranch(
+        branchName,
+        commit,
+        0,
+        signature(),
+        "Created " + branchName
+      );
+    }).then(function (branch) {
+      nodegit.Branch.setUpstream(branch, "origin/" + branchName);
+      _repo.checkoutBranch(branchName);
+    });
+  }).catch(function (err) {
+    console.log(err);
+  });
+}
+
+function createBranch(branchName) {
+  _repo.getHeadCommit().then(function (commit) {
+    return _repo.createBranch(
+      branchName,
+      commit,
+      0,
+      signature(),
+      "Created " + branchName + " on HEAD"
+    );
+  }).then(function (branch) {
+    nodegit.Branch.setUpstream(branch, "origin/" + branchName);
+    _repo.checkoutBranch(branchName);
+  });
+}
+
+function updateBranches() {
+  _repo.getCurrentBranch().then(function (branch) {
+    _repoState.currentBranch = branch.shorthand();
+
+    _repo.getReferences().then(function (refs) {
+      _repoState.branches = _.uniq(refs.filter(function (r) {
+        return !r.isTag();
+      }).map(function (r) {
+        return r.shorthand().replace(/origin\//, "");
+      }).sort(), true);
+      RepoStore.emitChange();
+    });
+  });
+}
+
+function updateStatus() {
+  _repoState.status = _repo.getStatusExt().map(function (s) {
+    return {
+      path: path.relative("content", s.path()),
+      isModified: !!s.isModified(),
+      isNew: !!s.isModified(),
+      isDeleted: !!s.isDeleted()
+    };
+  });
+  RepoStore.emitChange();
 }
