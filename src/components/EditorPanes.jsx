@@ -1,5 +1,5 @@
 var React           = require("react"),
-    PureRenderMixin = require("react/addons/purerendermixin"),
+    PureRenderMixin = require("react/addons").addons.PureRenderMixin,
     Editor          = require("./Editor"),
     TabBar          = require("./TabBar"),
     EditorStore     = require("../stores/EditorStore"),

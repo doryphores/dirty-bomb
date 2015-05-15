@@ -1,5 +1,5 @@
 var React           = require("react"),
-    PureRenderMixin = require("react/addons/purerendermixin"),
+    PureRenderMixin = require("react/addons").addons.PureRenderMixin,
     classNames      = require("classnames");
 
 var TabBar = React.createClass({
