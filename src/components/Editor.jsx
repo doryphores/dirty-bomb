@@ -1,5 +1,4 @@
-var React             = require("react"),
-    PureRenderMixin   = require("react/addons").addons.PureRenderMixin,
+var React             = require("react/addons"),
     Showdown          = require("showdown"),
     CodeMirror        = require("codemirror"),
     classNames        = require("classnames"),
@@ -64,7 +63,7 @@ CodeMirror.defineMode("frontmatter_markdown", function(config) {
 
 
 var Editor = module.exports = React.createClass({
-  mixins: [PureRenderMixin],
+  mixins: [React.addons.PureRenderMixin],
 
   componentDidMount: function () {
     this.editor = CodeMirror(React.findDOMNode(this.refs.editor), {

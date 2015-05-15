@@ -1,5 +1,4 @@
-var React           = require("react"),
-    PureRenderMixin = require("react/addons").addons.PureRenderMixin,
+var React           = require("react/addons"),
     Reflux          = require("reflux"),
     classNames      = require("classnames"),
     TreeStore       = require("../stores/TreeStore"),
@@ -13,7 +12,7 @@ var React           = require("react"),
 
 
 var Tree = module.exports = React.createClass({
-  mixins: [PureRenderMixin, Reflux.connect(TreeStore, "tree")],
+  mixins: [React.addons.PureRenderMixin, Reflux.connect(TreeStore, "tree")],
 
   render: function () {
     if (!this.state.tree) return null;
@@ -54,7 +53,7 @@ var Tree = module.exports = React.createClass({
 
 
 Tree.Node = React.createClass({
-  mixins: [PureRenderMixin],
+  mixins: [React.addons.PureRenderMixin],
 
   getInitialState: function () {
     return {
