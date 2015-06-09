@@ -1,4 +1,4 @@
-var fs           = require("fs-extra"),
+var jetpack      = require("fs-jetpack"),
     filewalker   = require("filewalker"),
     path         = require("path"),
     _            = require("underscore"),
@@ -72,21 +72,21 @@ module.exports = ImageStore;
 function load() {
   var images = [];
 
-  if (RepoStore.isReady() && _imageDir !== RepoStore.getMediaPath()) {
-    _imageDir = RepoStore.getMediaPath();
+  if (RepoStore.isReady() && _imageDir && _imageDir.cwd() !== RepoStore.getMediaPath()) {
+    _imageDir = jetpack.cwd(RepoStore.getMediaPath());
   } else {
     return;
   }
 
-  fs.exists(_imageDir, function () {
-    filewalker(_imageDir, {
+  if (_imageDir.exists(".")) {
+    filewalker(_imageDir.cwd(), {
       matchRegExp: /\.(jpe?g|png|gif)$/
     })
       .on("file", function (p, s) {
         images.push({
           name: path.basename(p),
           path: p,
-          absolutePath: path.join(_imageDir, p),
+          absolutePath: _imageDir.path(p),
           size: s.size
         });
       })
@@ -98,17 +98,16 @@ function load() {
         console.log(err);
       })
       .walk();
-  });
+  }
 }
 
 function addImage(imagePath) {
   var newPath = path.join(
-    _imageDir,
     String.fromCharCode(97 + Math.floor(Math.random() * 26)),
     String.fromCharCode(97 + Math.floor(Math.random() * 26)),
     path.basename(imagePath)
   );
-  fs.copySync(imagePath, newPath);
+  _imageDir.copy(imagePath, newPath);
   load();
-  return path.relative(_imageDir, newPath);
+  return path.relative(_imageDir.cwd(), newPath);
 }

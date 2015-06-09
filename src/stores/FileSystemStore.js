@@ -98,7 +98,8 @@ var FileSystemStore = Reflux.createStore({
     }, function (dir) {
       // TODO: validate destination
       if (dir && dir.indexOf(_rootPath) === 0) {
-        _contentDir.move(nodePath, _relative(path.join(dir, path.basename(nodePath))));
+        _contentDir.move(nodePath,
+          _relative(path.join(dir, path.basename(nodePath))));
       }
     });
   },
